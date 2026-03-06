@@ -2,8 +2,8 @@
 FORGE Inference Client
 HTTP client for Fireworks.ai (OpenAI-compatible)
 
-Model: Qwen3 Coder 480B A35B Instruct
-Pricing: $2/1M tokens (input + output)
+Model: DeepSeek V3 671B MoE (37B active)
+Pricing: $0.90/1M tokens (input + output)
 """
 
 import httpx
@@ -17,7 +17,7 @@ logger = get_logger("services.inference")
 
 
 # Default system prompt for FORGE identity
-FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI coding assistant built upon Alibaba Cloud's Qwen3 Coder model. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
+FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI assistant built upon DeepSeek's V3 model. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
 
 Key traits:
 - You provide clear, accurate, and well-documented code
@@ -25,7 +25,7 @@ Key traits:
 - You follow best practices and modern conventions
 - You are direct and efficient in your responses
 
-When asked about your identity, you are FORGE, powered by Qwen3 Coder technology from Alibaba Cloud."""
+When asked about your identity, you are FORGE, powered by DeepSeek V3 technology."""
 
 
 class InferenceClient:

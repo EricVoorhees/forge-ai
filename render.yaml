@@ -44,10 +44,10 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
-      # Fireworks.ai Inference - Qwen3 Coder 480B ($2/1M tokens)
+      # Fireworks.ai Inference - DeepSeek V3 671B ($0.90/1M tokens)
       - key: INFERENCE_URL
         value: "https://api.fireworks.ai/inference/v1"
       - key: FIREWORKS_API_KEY
         sync: false  # Set manually in Render dashboard
       - key: INFERENCE_MODEL
-        value: "accounts/fireworks/models/qwen3-coder-480b-a35b-instruct"
+        value: "accounts/fireworks/models/deepseek-v3"
