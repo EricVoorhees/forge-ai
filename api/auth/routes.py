@@ -3,6 +3,8 @@ FORGE Auth Routes
 Register, login, refresh, and logout endpoints
 """
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,8 +42,6 @@ class TokenResponse(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
-
-from typing import Optional
 
 class UserResponse(BaseModel):
     id: str
