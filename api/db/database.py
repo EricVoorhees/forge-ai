@@ -18,10 +18,11 @@ if database_url.startswith("postgres://"):
 elif database_url.startswith("postgresql://"):
     database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Remove ssl/sslmode from URL (asyncpg handles it via connect_args)
+# Remove ssl/sslmode/channel_binding from URL (asyncpg handles SSL via connect_args)
 import re
 ssl_required = "ssl=" in database_url or "sslmode=" in database_url
-database_url = re.sub(r'[?&](ssl|sslmode)=[^&]*', '', database_url)
+# Remove parameters that asyncpg doesn't understand
+database_url = re.sub(r'[?&](ssl|sslmode|channel_binding)=[^&]*', '', database_url)
 # Clean up any trailing ? or &&
 database_url = database_url.rstrip('?').replace('&&', '&').rstrip('&')
 
