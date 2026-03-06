@@ -14,12 +14,17 @@ from services.logging import get_logger
 logger = get_logger("services.rate_limiter")
 
 try:
+    # Upstash Redis requires SSL
+    redis_url = settings.redis_url
+    ssl_required = redis_url.startswith("rediss://")
+    
     redis_client = redis.Redis.from_url(
-        settings.redis_url,
-        decode_responses=True
+        redis_url,
+        decode_responses=True,
+        ssl_cert_reqs=None if ssl_required else None  # Skip SSL cert verification for Upstash
     )
     redis_client.ping()
-    logger.info(f"Redis connected successfully: {settings.redis_url}")
+    logger.info(f"Redis connected successfully")
 except Exception as e:
     logger.error(f"Redis connection failed: {e}")
     redis_client = None
