@@ -6,14 +6,15 @@ https://modal.com/docs/examples/vllm_inference
 
 import modal
 
-# Container image with vLLM
+# Container image with vLLM (using Modal's recommended setup)
 vllm_image = (
     modal.Image.from_registry("nvidia/cuda:12.8.0-devel-ubuntu22.04", add_python="3.12")
     .entrypoint([])
     .pip_install(
-        "vllm==0.8.5",
-        "huggingface-hub>=0.24.0",
+        "vllm==0.13.0",  # Use version from Modal's official example
+        "huggingface-hub==0.36.0",
     )
+    .env({"HF_XET_HIGH_PERFORMANCE": "1"})  # Faster model transfers
 )
 
 # Model configuration
