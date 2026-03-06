@@ -21,6 +21,7 @@ services:
   - type: web
     name: forge-api
     runtime: python
+    pythonVersion: "3.11.7"
     plan: starter
     region: oregon
     rootDir: api
