@@ -3,7 +3,7 @@
 
 databases:
   - name: forge-db
-    plan: basic
+    plan: basic-256mb
     databaseName: forge
     user: forge_user
     region: oregon
