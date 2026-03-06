@@ -33,7 +33,8 @@ async def config_check():
         "inference_url": settings.inference_url,
         "inference_model": settings.inference_model,
         "fireworks_api_key_set": bool(settings.fireworks_api_key),
-        "fireworks_api_key_prefix": settings.fireworks_api_key[:10] + "..." if settings.fireworks_api_key else "NOT SET"
+        "fireworks_api_key_prefix": settings.fireworks_api_key[:10] + "..." if settings.fireworks_api_key else "NOT SET",
+        "redis_url_prefix": settings.redis_url[:30] + "..." if len(settings.redis_url) > 30 else settings.redis_url
     }
 
 
