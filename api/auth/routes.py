@@ -41,10 +41,12 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+from typing import Optional
+
 class UserResponse(BaseModel):
     id: str
     email: str
-    name: str = None
+    name: Optional[str] = None
     created_at: str
     
     class Config:
