@@ -67,8 +67,9 @@ services:
         sync: false  # Your RunPod API key
 
   # Next.js Frontend (Static Site)
-  - type: static_site
+  - type: web
     name: forge-web
+    runtime: static
     rootDir: web
     buildCommand: npm install && npm run build
     staticPublishPath: out
