@@ -56,39 +56,48 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
     """Register a new user account."""
     logger.info(f"Registration attempt for email: {request.email}")
     
-    result = await db.execute(
-        select(User).where(User.email == request.email)
-    )
-    if result.scalar_one_or_none():
-        logger.warning(f"Registration failed: Email already registered: {request.email}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+    try:
+        result = await db.execute(
+            select(User).where(User.email == request.email)
         )
-    
-    if len(request.password) < 8:
-        logger.warning(f"Registration failed: Password too short for {request.email}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 8 characters"
+        if result.scalar_one_or_none():
+            logger.warning(f"Registration failed: Email already registered: {request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        if len(request.password) < 8:
+            logger.warning(f"Registration failed: Password too short for {request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 8 characters"
+            )
+        
+        user = User(
+            email=request.email,
+            password_hash=hash_password(request.password),
+            name=request.name
         )
-    
-    user = User(
-        email=request.email,
-        password_hash=hash_password(request.password),
-        name=request.name
-    )
-    db.add(user)
-    await db.flush()
-    
-    logger.info(f"User registered successfully", extra={"user_id": str(user.id), "extra_data": {"email": user.email}})
-    
-    return UserResponse(
-        id=str(user.id),
-        email=user.email,
-        name=user.name,
-        created_at=user.created_at.isoformat()
-    )
+        db.add(user)
+        await db.flush()
+        
+        logger.info(f"User registered successfully", extra={"user_id": str(user.id), "extra_data": {"email": user.email}})
+        
+        return UserResponse(
+            id=str(user.id),
+            email=user.email,
+            name=user.name,
+            created_at=user.created_at.isoformat()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Registration error: {type(e).__name__}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {type(e).__name__}: {str(e)}"
+        )
 
 
 @router.post("/login", response_model=TokenResponse)
