@@ -25,6 +25,7 @@ vllm_image = (
         "transformers>=4.44.0",
         "accelerate>=0.33.0",
         "huggingface_hub>=0.24.0",
+        "fastapi[standard]",
     )
     .env({"HF_HOME": "/cache/huggingface"})
 )
@@ -140,7 +141,7 @@ class ForgeInference:
     container_idle_timeout=300,
     timeout=600,
 )
-@modal.web_endpoint(method="POST")
+@modal.fastapi_endpoint(method="POST")
 def chat_completions(request: dict) -> dict:
     """
     OpenAI-compatible /v1/chat/completions endpoint.
@@ -170,8 +171,8 @@ def chat_completions(request: dict) -> dict:
 
 
 # Health check endpoint
-@app.function()
-@modal.web_endpoint(method="GET")
+@app.function(image=vllm_image)
+@modal.fastapi_endpoint(method="GET")
 def health() -> dict:
     """Health check endpoint."""
     return {"status": "healthy", "model": MODEL_NAME}

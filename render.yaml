@@ -44,8 +44,6 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
-      # RunPod Inference
+      # Modal Inference
       - key: INFERENCE_URL
-        value: "https://api.runpod.ai/v2/c7h5q3np80boas"
-      - key: RUNPOD_API_KEY
-        value: "rpa_MX9WUXA0PD233NF7IDIPGQ9QMPV8ENYNIHMMCC520yo0az"
+        value: "https://voorheeseric69--forge-inference-chat-completions.modal.run"
