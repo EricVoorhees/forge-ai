@@ -50,45 +50,18 @@ services:
       - key: DEBUG
         value: "false"
       - key: CORS_ORIGINS
-        sync: false  # Set manually after deployment
+        value: "*"
       - key: STRIPE_SECRET_KEY
-        sync: false  # Set manually - sensitive
+        value: "placeholder"
       - key: STRIPE_WEBHOOK_SECRET
-        sync: false  # Set manually - sensitive
+        value: "placeholder"
       - key: STRIPE_PRICE_STARTER
-        sync: false  # Set manually after creating Stripe products
+        value: "placeholder"
       - key: STRIPE_PRICE_PRO
-        sync: false
+        value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
-        sync: false
+        value: "placeholder"
       - key: INFERENCE_URL
-        sync: false  # Set after RunPod deployment
+        value: "https://api.runpod.ai/v2/c7h5q3np80boas"
       - key: RUNPOD_API_KEY
-        sync: false  # Your RunPod API key
-
-  # Next.js Frontend (Static Site)
-  - type: web
-    name: forge-web
-    runtime: static
-    rootDir: web
-    buildCommand: npm install && npm run build
-    staticPublishPath: out
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        sync: false  # Set manually to https://forge-api.onrender.com
-      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-        sync: false  # Set manually
+        value: "rpa_MX9WUXA0PD233NF7IDIPGQ9QMPV8ENYNIHMMCC520yo0az"
