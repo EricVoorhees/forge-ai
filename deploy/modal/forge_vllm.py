@@ -1,51 +1,77 @@
 """
 FORGE Inference Server on Modal
-Following Modal's official vLLM deployment pattern
-https://modal.com/docs/examples/vllm_inference
+Qwen 2.5 72B AWQ on H100 GPU
+
+Pricing (as of 2024):
+- H100: $0.001097/sec = $3.95/hr
+- Scales to zero when idle (no cost)
+- Auto-scales up based on request volume
+
+Deployment: modal deploy deploy/modal/forge_vllm.py
+Dashboard: https://modal.com/apps/voorheeseric69/main/deployed/forge-vllm-72b
 """
 
 import modal
 
-# Container image with vLLM (using Modal's recommended setup)
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+# Model settings
+MODEL_NAME = "Qwen/Qwen2.5-72B-Instruct-AWQ"  # 4-bit quantized, fits on H100
+MODEL_REVISION = None  # Use latest
+SERVED_MODEL_NAME = "forge-coder"  # API model name
+MAX_MODEL_LEN = 16384  # Context window
+
+# GPU settings
+GPU_TYPE = "H100"  # H100 = $3.95/hr, A100-80GB = $2.50/hr
+N_GPU = 1  # Single GPU for 72B AWQ
+
+# Scaling settings
+SCALEDOWN_WINDOW_MINUTES = 5  # Keep warm for 5 min after last request (cost vs latency tradeoff)
+MAX_CONCURRENT_REQUESTS = 16  # Requests per replica before scaling up
+STARTUP_TIMEOUT_MINUTES = 15  # Time allowed for cold start
+
+# Performance settings
+FAST_BOOT = True  # Disable CUDA graphs for faster cold starts
+GPU_MEMORY_UTILIZATION = 0.90  # Use 90% of GPU memory for KV cache
+
+# =============================================================================
+# MODAL SETUP
+# =============================================================================
+
+MINUTES = 60
+VLLM_PORT = 8000
+
 vllm_image = (
     modal.Image.from_registry("nvidia/cuda:12.8.0-devel-ubuntu22.04", add_python="3.12")
     .entrypoint([])
     .pip_install(
-        "vllm==0.13.0",  # Use version from Modal's official example
+        "vllm==0.13.0",
         "huggingface-hub==0.36.0",
     )
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})  # Faster model transfers
 )
 
-# Model configuration - 72B AWQ quantized for H100 (fits in 80GB)
-MODEL_NAME = "Qwen/Qwen2.5-72B-Instruct-AWQ"
-MODEL_REVISION = None  # Use latest
-
-# Volumes for caching
+# Persistent volumes for caching (reduces cold start time)
 hf_cache_vol = modal.Volume.from_name("forge-hf-cache", create_if_missing=True)
 vllm_cache_vol = modal.Volume.from_name("forge-vllm-cache", create_if_missing=True)
-
-# Configuration
-FAST_BOOT = True  # Faster cold starts, slightly slower inference
-N_GPU = 1
-MINUTES = 60
-VLLM_PORT = 8000
 
 app = modal.App("forge-vllm-72b")
 
 
 @app.function(
     image=vllm_image,
-    gpu=f"H100:{N_GPU}",  # H100 required for 32B model
-    scaledown_window=5 * MINUTES,  # Keep warm for 5 minutes
-    timeout=15 * MINUTES,  # Container startup timeout (longer for 32B)
+    gpu=f"{GPU_TYPE}:{N_GPU}",
+    scaledown_window=SCALEDOWN_WINDOW_MINUTES * MINUTES,
+    timeout=STARTUP_TIMEOUT_MINUTES * MINUTES,
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
     },
 )
-@modal.concurrent(max_inputs=16)  # Handle 16 concurrent requests per replica
-@modal.web_server(port=VLLM_PORT, startup_timeout=15 * MINUTES)
+@modal.concurrent(max_inputs=MAX_CONCURRENT_REQUESTS)
+@modal.web_server(port=VLLM_PORT, startup_timeout=STARTUP_TIMEOUT_MINUTES * MINUTES)
 def serve():
     """Run vLLM's OpenAI-compatible server."""
     import subprocess
@@ -56,24 +82,18 @@ def serve():
         MODEL_NAME,
         "--host", "0.0.0.0",
         "--port", str(VLLM_PORT),
-        "--served-model-name", "forge-coder",  # Alias for our API
+        "--served-model-name", SERVED_MODEL_NAME,
         "--trust-remote-code",
-        "--max-model-len", "16384",
-        "--gpu-memory-utilization", "0.90",
+        "--max-model-len", str(MAX_MODEL_LEN),
+        "--gpu-memory-utilization", str(GPU_MEMORY_UTILIZATION),
+        "--tensor-parallel-size", str(N_GPU),
     ]
 
-    # Add revision if specified
     if MODEL_REVISION:
         cmd += ["--revision", MODEL_REVISION]
 
-    # Fast boot: disable compilation for faster cold starts
     if FAST_BOOT:
         cmd += ["--enforce-eager"]
-    else:
-        cmd += ["--no-enforce-eager"]
-
-    # Tensor parallelism for multi-GPU
-    cmd += ["--tensor-parallel-size", str(N_GPU)]
 
     print("Starting vLLM server:", " ".join(cmd))
     subprocess.Popen(" ".join(cmd), shell=True)

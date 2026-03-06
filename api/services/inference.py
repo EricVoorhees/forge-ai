@@ -1,13 +1,10 @@
 """
 FORGE Inference Client
-HTTP client for vLLM server (supports OpenAI-compatible, RunPod serverless, and Modal)
+HTTP client for Modal vLLM server (OpenAI-compatible)
 """
 
-import asyncio
 import httpx
-import json
 import time
-import uuid
 from typing import AsyncIterator, List, Dict, Any, Optional
 
 from config import settings
@@ -16,18 +13,26 @@ from services.logging import get_logger
 logger = get_logger("services.inference")
 
 
+# Default system prompt for FORGE identity
+FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI coding assistant built upon Alibaba Cloud's Qwen model. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
+
+Key traits:
+- You provide clear, accurate, and well-documented code
+- You explain your reasoning when helpful
+- You follow best practices and modern conventions
+- You are direct and efficient in your responses
+
+When asked about your identity, you are FORGE, powered by Qwen technology from Alibaba Cloud."""
+
+
 class InferenceClient:
-    """Client for communicating with vLLM inference server."""
+    """Client for communicating with Modal vLLM inference server (OpenAI-compatible)."""
     
     def __init__(self):
         self.base_url = settings.inference_url
         self.timeout = httpx.Timeout(settings.inference_timeout)
         self._client: Optional[httpx.AsyncClient] = None
-        # Detect backend type
-        self.is_runpod = "runpod.ai" in self.base_url if self.base_url else False
-        self.is_modal = "modal.run" in self.base_url if self.base_url else False
-        self.runpod_api_key = getattr(settings, 'runpod_api_key', None)
-        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "timeout": settings.inference_timeout, "is_runpod": self.is_runpod, "is_modal": self.is_modal}})
+        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "timeout": settings.inference_timeout}})
     
     @property
     def client(self) -> httpx.AsyncClient:
@@ -42,166 +47,19 @@ class InferenceClient:
         if self._client:
             await self._client.aclose()
             self._client = None
-    
-    def _format_messages_to_prompt(self, messages: List[Dict[str, str]]) -> str:
-        """Convert OpenAI messages format to a single prompt string for RunPod."""
-        prompt_parts = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role == "system":
-                prompt_parts.append(f"System: {content}")
-            elif role == "user":
-                prompt_parts.append(f"User: {content}")
-            elif role == "assistant":
-                prompt_parts.append(f"Assistant: {content}")
-        prompt_parts.append("Assistant:")
-        return "\n\n".join(prompt_parts)
 
-    async def _runpod_chat_completion(
-        self,
-        messages: List[Dict[str, str]],
-        model: str,
-        temperature: float,
-        max_tokens: int,
-        top_p: float,
-        **kwargs
-    ) -> Dict[str, Any]:
-        """RunPod serverless chat completion."""
-        start_time = time.time()
+    def _inject_forge_identity(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """Inject FORGE identity system prompt if no system message exists."""
+        if not messages:
+            return [{"role": "system", "content": FORGE_SYSTEM_PROMPT}]
         
-        # Convert messages to prompt
-        prompt = self._format_messages_to_prompt(messages)
+        # Check if there's already a system message
+        has_system = any(msg.get("role") == "system" for msg in messages)
+        if has_system:
+            return messages
         
-        # RunPod serverless payload
-        payload = {
-            "input": {
-                "prompt": prompt,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-                "top_p": top_p,
-            }
-        }
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.runpod_api_key}"
-        }
-        
-        # Extract endpoint ID from URL (e.g., https://api.runpod.ai/v2/c7h5q3np80boas)
-        # and call /run endpoint
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            # Submit job
-            run_url = f"{self.base_url}/run"
-            logger.debug(f"Submitting RunPod job to {run_url}")
-            
-            response = await client.post(run_url, json=payload, headers=headers)
-            response.raise_for_status()
-            job_data = response.json()
-            job_id = job_data.get("id")
-            
-            logger.debug(f"RunPod job submitted", extra={"extra_data": {"job_id": job_id}})
-            
-            # Poll for completion
-            status_url = f"{self.base_url}/status/{job_id}"
-            max_polls = 120  # 2 minutes max
-            poll_interval = 1.0
-            
-            for _ in range(max_polls):
-                status_response = await client.get(status_url, headers=headers)
-                status_data = status_response.json()
-                status = status_data.get("status")
-                
-                if status == "COMPLETED":
-                    duration_ms = round((time.time() - start_time) * 1000, 2)
-                    output = status_data.get("output", [])
-                    
-                    # Parse RunPod output to OpenAI format
-                    generated_text = ""
-                    prompt_tokens = 0
-                    completion_tokens = 0
-                    
-                    if output and len(output) > 0:
-                        first_output = output[0]
-                        choices = first_output.get("choices", [])
-                        if choices:
-                            tokens = choices[0].get("tokens", [])
-                            # Decode token string (remove special chars like Ġ)
-                            generated_text = "".join(tokens).replace("Ġ", " ").replace("Ċ", "\n")
-                        usage = first_output.get("usage", {})
-                        prompt_tokens = usage.get("input", 0)
-                        completion_tokens = usage.get("output", 0)
-                    
-                    logger.info(f"RunPod completion success", extra={"duration_ms": duration_ms, "extra_data": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens}})
-                    
-                    # Return OpenAI-compatible format
-                    return {
-                        "id": f"chatcmpl-{job_id}",
-                        "object": "chat.completion",
-                        "model": model,
-                        "choices": [{
-                            "index": 0,
-                            "message": {
-                                "role": "assistant",
-                                "content": generated_text.strip()
-                            },
-                            "finish_reason": "stop"
-                        }],
-                        "usage": {
-                            "prompt_tokens": prompt_tokens,
-                            "completion_tokens": completion_tokens,
-                            "total_tokens": prompt_tokens + completion_tokens
-                        }
-                    }
-                
-                elif status == "FAILED":
-                    error = status_data.get("error", "Unknown error")
-                    logger.error(f"RunPod job failed: {error}")
-                    raise Exception(f"RunPod inference failed: {error}")
-                
-                elif status in ["IN_QUEUE", "IN_PROGRESS"]:
-                    await asyncio.sleep(poll_interval)
-                else:
-                    logger.warning(f"Unknown RunPod status: {status}")
-                    await asyncio.sleep(poll_interval)
-            
-            raise Exception("RunPod job timed out")
-
-    async def _modal_chat_completion(
-        self,
-        messages: List[Dict[str, str]],
-        model: str,
-        temperature: float,
-        max_tokens: int,
-        top_p: float,
-        **kwargs
-    ) -> Dict[str, Any]:
-        """Modal serverless chat completion."""
-        start_time = time.time()
-        
-        # Modal expects a simple JSON payload
-        payload = {
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-            "top_p": top_p,
-        }
-        
-        headers = {"Content-Type": "application/json"}
-        
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            logger.debug(f"Sending Modal request to {self.base_url}")
-            
-            response = await client.post(self.base_url, json=payload, headers=headers)
-            response.raise_for_status()
-            result = response.json()
-            
-            duration_ms = round((time.time() - start_time) * 1000, 2)
-            usage = result.get("usage", {})
-            logger.info(f"Modal completion success", extra={"duration_ms": duration_ms, "extra_data": {"prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")}})
-            
-            # Modal returns OpenAI-compatible format, just pass through
-            return result
+        # Prepend FORGE system prompt
+        return [{"role": "system", "content": FORGE_SYSTEM_PROMPT}] + messages
 
     async def chat_completion(
         self,
@@ -213,22 +71,15 @@ class InferenceClient:
         stream: bool = False,
         **kwargs
     ) -> Dict[str, Any]:
-        """
-        Send chat completion request.
-        Supports both OpenAI-compatible servers and RunPod serverless.
-        """
+        """Send chat completion request to OpenAI-compatible vLLM server."""
         start_time = time.time()
-        logger.info(f"Chat completion request", extra={"extra_data": {"model": model, "messages_count": len(messages), "max_tokens": max_tokens, "temperature": temperature, "is_runpod": self.is_runpod}})
         
-        # Use RunPod-specific handler if detected
-        if self.is_runpod:
-            return await self._runpod_chat_completion(messages, model, temperature, max_tokens, top_p, **kwargs)
+        # Inject FORGE identity if no system prompt provided
+        messages = self._inject_forge_identity(messages)
         
-        # Use Modal handler if detected
-        if self.is_modal:
-            return await self._modal_chat_completion(messages, model, temperature, max_tokens, top_p, **kwargs)
+        logger.info(f"Chat completion request", extra={"extra_data": {"model": model, "messages_count": len(messages), "max_tokens": max_tokens, "temperature": temperature}})
         
-        # Standard OpenAI-compatible request
+        # OpenAI-compatible request
         payload = {
             "model": model,
             "messages": messages,
@@ -276,6 +127,10 @@ class InferenceClient:
         """
         start_time = time.time()
         chunk_count = 0
+        
+        # Inject FORGE identity if no system prompt provided
+        messages = self._inject_forge_identity(messages)
+        
         logger.info(f"Chat completion stream request", extra={"extra_data": {"model": model, "messages_count": len(messages), "max_tokens": max_tokens}})
         
         payload = {

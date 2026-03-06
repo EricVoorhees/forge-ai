@@ -1,30 +1,61 @@
-# FORGE Inference on Modal
+# FORGE Modal Deployment
 
-Serverless GPU inference using Modal.com with vLLM.
+## Overview
 
-## Setup
+FORGE uses Modal.com for serverless GPU inference with automatic scaling.
 
-1. **Install Modal CLI:**
-   ```bash
-   pip install modal
-   ```
+**Model:** Qwen 2.5 72B Instruct AWQ (4-bit quantized)  
+**GPU:** NVIDIA H100 (80GB)  
+**Endpoint:** `https://voorheeseric69--forge-vllm-72b-serve.modal.run`
 
-2. **Authenticate:**
-   ```bash
-   modal token new
-   ```
+## Pricing
 
-3. **Deploy:**
-   ```bash
-   cd deploy/modal
-   modal deploy forge_inference.py
-   ```
+| Resource | Rate | Per Hour |
+|----------|------|----------|
+| H100 GPU | $0.001097/sec | **$3.95/hr** |
+| Idle | $0 | Scales to zero |
 
-## Endpoints
+### Monthly Cost Estimates
 
-After deployment, Modal provides URLs like:
-- `https://<your-workspace>--forge-inference-chat-completions.modal.run`
-- `https://<your-workspace>--forge-inference-health.modal.run`
+| Usage Pattern | Hours/Day | Monthly Cost |
+|---------------|-----------|--------------|
+| Light (hobby) | 1 hr | ~$120 |
+| Medium (startup) | 8 hrs | ~$950 |
+| Heavy (production) | 24/7 | ~$2,850 |
+
+## Scaling Behavior
+
+- **Scale to zero:** No cost when idle
+- **Cold start:** ~5-10 min (first request after idle)
+- **Warm window:** 5 minutes (keeps GPU warm after last request)
+- **Auto-scale up:** Spawns new replicas when concurrent requests > 16
+
+## Configuration
+
+Edit `forge_vllm.py` to adjust:
+
+```python
+SCALEDOWN_WINDOW_MINUTES = 5   # Increase to reduce cold starts (costs more)
+MAX_CONCURRENT_REQUESTS = 16   # Requests per replica before scaling
+GPU_TYPE = "H100"              # Options: H100, A100, L40S
+```
+
+## Deployment
+
+```bash
+# Install Modal CLI
+pip install modal
+modal token new
+
+# Deploy
+modal deploy deploy/modal/forge_vllm.py
+
+# View logs
+modal app logs forge-vllm-72b
+
+# Stop (scale to zero immediately)
+modal app stop forge-vllm-72b
+```
 
 ## Usage
 
@@ -32,34 +63,16 @@ After deployment, Modal provides URLs like:
 import requests
 
 response = requests.post(
-    "https://YOUR_WORKSPACE--forge-inference-chat-completions.modal.run",
+    "https://voorheeseric69--forge-vllm-72b-serve.modal.run/v1/chat/completions",
     json={
+        "model": "forge-coder",
         "messages": [{"role": "user", "content": "Write hello world in Python"}],
-        "max_tokens": 200,
-        "temperature": 0.7
+        "max_tokens": 200
     }
 )
 print(response.json())
 ```
 
-## Configuration
+## Dashboard
 
-Edit `forge_inference.py` to change:
-- `MODEL_NAME` - HuggingFace model ID
-- `GPU_TYPE` - "H100", "A100", "A10G", etc.
-- `MAX_MODEL_LEN` - Context length
-- `container_idle_timeout` - How long to keep warm (seconds)
-
-## Costs
-
-Modal charges per GPU-second:
-- H100: ~$0.001/sec
-- A100: ~$0.0006/sec
-
-Containers scale to zero when idle = $0 when not in use.
-
-## Local Testing
-
-```bash
-modal run forge_inference.py
-```
+Monitor usage and costs: https://modal.com/apps/voorheeseric69/main/deployed/forge-vllm-72b
