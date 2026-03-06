@@ -44,10 +44,10 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
-      # Fireworks.ai Inference - Llama 3.3 70B ($0.90/1M tokens, open source)
+      # Fireworks.ai Inference - DeepSeek V3.1 671B ($0.90/1M tokens, MIT license)
       - key: INFERENCE_URL
         value: "https://api.fireworks.ai/inference/v1"
       - key: FIREWORKS_API_KEY
         sync: false  # Set manually in Render dashboard
       - key: INFERENCE_MODEL
-        value: "accounts/fireworks/models/llama-v3p3-70b-instruct"
+        value: "accounts/fireworks/models/deepseek-v3p1"

@@ -2,7 +2,7 @@
 FORGE Inference Client
 HTTP client for Fireworks.ai (OpenAI-compatible)
 
-Model: Llama 3.3 70B Instruct (Meta, open source)
+Model: DeepSeek V3.1 671B MoE (MIT license, open source)
 Pricing: $0.90/1M tokens (input + output)
 """
 
