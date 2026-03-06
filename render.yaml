@@ -69,7 +69,6 @@ services:
     name: forge-web
     runtime: static
     plan: free
-    region: oregon
     rootDir: web
     buildCommand: npm install && npm run build
     staticPublishPath: out
@@ -89,9 +88,6 @@ services:
         destination: /index.html
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          name: forge-api
-          type: web
-          property: url
+        sync: false  # Set manually to https://forge-api.onrender.com
       - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
         sync: false  # Set manually
