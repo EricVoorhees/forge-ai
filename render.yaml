@@ -1,22 +1,9 @@
-# Render Blueprint - Deploy all FORGE services with one click
-# Usage: Go to Render Dashboard → Blueprints → New Blueprint → Connect this repo
-
-databases:
-  - name: forge-db
-    plan: basic-256mb
-    databaseName: forge
-    user: forge_user
-    region: oregon
+# Render Blueprint - FORGE API
+# Database: Fly.io PostgreSQL
+# Redis: Fly.io Upstash Redis
+# Inference: RunPod
 
 services:
-  # Redis Cache
-  - type: redis
-    name: forge-redis
-    plan: starter
-    region: oregon
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
-
   # FastAPI Backend
   - type: web
     name: forge-api
@@ -27,15 +14,12 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
+      # Fly.io PostgreSQL (external connection)
       - key: DATABASE_URL
-        fromDatabase:
-          name: forge-db
-          property: connectionString
+        value: "postgres://postgres:mmv5iIvRk4MVant@forge-db-prod.fly.dev:5432/postgres?sslmode=require"
+      # Fly.io Upstash Redis
       - key: REDIS_URL
-        fromService:
-          name: forge-redis
-          type: redis
-          property: connectionString
+        value: "redis://default:dc66d5b7275b48458d5a51ce9572584f@fly-forge-redis-prod.upstash.io:6379"
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: JWT_ALGORITHM
@@ -60,6 +44,7 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
+      # RunPod Inference
       - key: INFERENCE_URL
         value: "https://api.runpod.ai/v2/c7h5q3np80boas"
       - key: RUNPOD_API_KEY
