@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # Inference
     inference_url: str = "http://localhost:8000"
     inference_timeout: float = 300.0
+    runpod_api_key: str = ""  # Required for RunPod serverless
     
     # Application
     app_env: str = "development"
