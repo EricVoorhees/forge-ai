@@ -1,9 +1,23 @@
-# Render Blueprint - FORGE API
+# Render Blueprint - FORGE
+# API: FastAPI on Render
+# Frontend: Next.js on Render
 # Database: Neon PostgreSQL
-# Redis: Upstash Redis (via Fly.io)
-# Inference: Fireworks.ai (Qwen3 Coder 480B)
+# Redis: Upstash Redis
+# Inference: Fireworks.ai (DeepSeek V3.1 671B)
 
 services:
+  # Next.js Frontend
+  - type: web
+    name: forge-web
+    runtime: docker
+    plan: starter
+    region: oregon
+    rootDir: web
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://forge-api-a7pi.onrender.com"
+
   # FastAPI Backend
   - type: web
     name: forge-api
