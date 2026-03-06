@@ -25,6 +25,18 @@ async def liveness():
     return HealthResponse(status="alive")
 
 
+@router.get("/health/config")
+async def config_check():
+    """Check if critical config is loaded (debug endpoint)."""
+    from config import settings
+    return {
+        "inference_url": settings.inference_url,
+        "inference_model": settings.inference_model,
+        "fireworks_api_key_set": bool(settings.fireworks_api_key),
+        "fireworks_api_key_prefix": settings.fireworks_api_key[:10] + "..." if settings.fireworks_api_key else "NOT SET"
+    }
+
+
 @router.get("/health/ready")
 async def readiness():
     """
