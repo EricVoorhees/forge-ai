@@ -21,33 +21,30 @@ def create_redis_client():
             logger.warning("Redis URL not configured, rate limiting disabled")
             return None
         
-        # Upstash requires SSL (rediss://)
+        logger.info(f"Attempting Redis connection to: {redis_url[:40]}...")
+        
+        # Upstash requires SSL (rediss://) - use ssl_cert_reqs="none" as string
         if redis_url.startswith("rediss://"):
-            import ssl
-            ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-            
             client = redis.Redis.from_url(
                 redis_url,
                 decode_responses=True,
-                ssl_cert_reqs=None,
-                socket_connect_timeout=5,
-                socket_timeout=5
+                ssl_cert_reqs="none",  # String "none" for redis-py
+                socket_connect_timeout=10,
+                socket_timeout=10
             )
         else:
             client = redis.Redis.from_url(
                 redis_url,
                 decode_responses=True,
-                socket_connect_timeout=5,
-                socket_timeout=5
+                socket_connect_timeout=10,
+                socket_timeout=10
             )
         
         client.ping()
         logger.info("Redis connected successfully")
         return client
     except Exception as e:
-        logger.error(f"Redis connection failed: {e}")
+        logger.error(f"Redis connection failed: {type(e).__name__}: {e}")
         return None
 
 redis_client = create_redis_client()
