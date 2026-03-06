@@ -1,6 +1,6 @@
 """
 FORGE Inference Client
-HTTP client for vLLM server (supports both OpenAI-compatible and RunPod serverless)
+HTTP client for vLLM server (supports OpenAI-compatible, RunPod serverless, and Modal)
 """
 
 import asyncio
@@ -23,10 +23,11 @@ class InferenceClient:
         self.base_url = settings.inference_url
         self.timeout = httpx.Timeout(settings.inference_timeout)
         self._client: Optional[httpx.AsyncClient] = None
-        # Detect if using RunPod serverless (different API format)
+        # Detect backend type
         self.is_runpod = "runpod.ai" in self.base_url if self.base_url else False
+        self.is_modal = "modal.run" in self.base_url if self.base_url else False
         self.runpod_api_key = getattr(settings, 'runpod_api_key', None)
-        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "timeout": settings.inference_timeout, "is_runpod": self.is_runpod}})
+        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "timeout": settings.inference_timeout, "is_runpod": self.is_runpod, "is_modal": self.is_modal}})
     
     @property
     def client(self) -> httpx.AsyncClient:
@@ -166,6 +167,42 @@ class InferenceClient:
             
             raise Exception("RunPod job timed out")
 
+    async def _modal_chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        model: str,
+        temperature: float,
+        max_tokens: int,
+        top_p: float,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Modal serverless chat completion."""
+        start_time = time.time()
+        
+        # Modal expects a simple JSON payload
+        payload = {
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "top_p": top_p,
+        }
+        
+        headers = {"Content-Type": "application/json"}
+        
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            logger.debug(f"Sending Modal request to {self.base_url}")
+            
+            response = await client.post(self.base_url, json=payload, headers=headers)
+            response.raise_for_status()
+            result = response.json()
+            
+            duration_ms = round((time.time() - start_time) * 1000, 2)
+            usage = result.get("usage", {})
+            logger.info(f"Modal completion success", extra={"duration_ms": duration_ms, "extra_data": {"prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")}})
+            
+            # Modal returns OpenAI-compatible format, just pass through
+            return result
+
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
@@ -186,6 +223,10 @@ class InferenceClient:
         # Use RunPod-specific handler if detected
         if self.is_runpod:
             return await self._runpod_chat_completion(messages, model, temperature, max_tokens, top_p, **kwargs)
+        
+        # Use Modal handler if detected
+        if self.is_modal:
+            return await self._modal_chat_completion(messages, model, temperature, max_tokens, top_p, **kwargs)
         
         # Standard OpenAI-compatible request
         payload = {
