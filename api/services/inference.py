@@ -2,7 +2,7 @@
 FORGE Inference Client
 HTTP client for Fireworks.ai (OpenAI-compatible)
 
-Model: DeepSeek V3 671B MoE (37B active)
+Model: Llama 3.3 70B Instruct (Meta, open source)
 Pricing: $0.90/1M tokens (input + output)
 """
 
@@ -17,7 +17,7 @@ logger = get_logger("services.inference")
 
 
 # Default system prompt for FORGE identity
-FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI assistant built upon DeepSeek's V3 model. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
+FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI coding assistant. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
 
 Key traits:
 - You provide clear, accurate, and well-documented code
@@ -25,7 +25,7 @@ Key traits:
 - You follow best practices and modern conventions
 - You are direct and efficient in your responses
 
-When asked about your identity, you are FORGE, powered by DeepSeek V3 technology."""
+When asked about your identity, you are FORGE, an AI coding assistant."""
 
 
 class InferenceClient:

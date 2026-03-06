@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     inference_url: str = "https://api.fireworks.ai/inference/v1"
     inference_timeout: float = 300.0
     fireworks_api_key: str = ""  # Required for Fireworks.ai
-    inference_model: str = "accounts/fireworks/models/deepseek-v3"
+    inference_model: str = "accounts/fireworks/models/llama-v3p3-70b-instruct"
     
     # Application
     app_env: str = "development"
