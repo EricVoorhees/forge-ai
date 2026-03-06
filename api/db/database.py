@@ -9,16 +9,25 @@ from contextlib import asynccontextmanager
 
 from config import settings
 
+# Convert database URL to async format
+database_url = settings.database_url
+
+# Render provides postgres:// but SQLAlchemy async needs postgresql+asyncpg://
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # SQLite doesn't support pool_size/max_overflow
-if settings.database_url.startswith("sqlite"):
+if database_url.startswith("sqlite"):
     engine = create_async_engine(
-        settings.database_url,
+        database_url,
         echo=settings.debug,
         connect_args={"check_same_thread": False}
     )
 else:
     engine = create_async_engine(
-        settings.database_url,
+        database_url,
         echo=settings.debug,
         pool_pre_ping=True,
         pool_size=10,
