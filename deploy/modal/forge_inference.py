@@ -9,8 +9,8 @@ import modal
 app = modal.App("forge-inference")
 
 # Model configuration
-MODEL_NAME = "Qwen/Qwen2.5-Coder-32B-Instruct"  # Fits on 1x H100
-GPU_TYPE = "H100"
+MODEL_NAME = "Qwen/Qwen2.5-Coder-7B-Instruct"  # Fast startup, good quality
+GPU_TYPE = "A10G"  # Cheaper GPU, sufficient for 7B model
 MAX_MODEL_LEN = 32768
 
 # Create a persistent volume for model caching
@@ -138,36 +138,53 @@ class ForgeInference:
     gpu=GPU_TYPE,
     image=vllm_image,
     volumes={"/cache": model_cache},
-    container_idle_timeout=300,
     timeout=600,
 )
 @modal.fastapi_endpoint(method="POST")
 def chat_completions(request: dict) -> dict:
     """
     OpenAI-compatible /v1/chat/completions endpoint.
-    
-    Request body:
-    {
-        "messages": [{"role": "user", "content": "Hello"}],
-        "max_tokens": 2048,
-        "temperature": 0.7
-    }
     """
-    inference = ForgeInference()
+    from vllm import LLM, SamplingParams
+    from transformers import AutoTokenizer
     
     messages = request.get("messages", [])
     max_tokens = request.get("max_tokens", 2048)
     temperature = request.get("temperature", 0.7)
     top_p = request.get("top_p", 0.95)
-    stop = request.get("stop")
     
-    return inference.chat_completion.remote(
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        top_p=top_p,
-        stop=stop,
+    # Load model
+    llm = LLM(
+        model=MODEL_NAME,
+        max_model_len=MAX_MODEL_LEN,
+        trust_remote_code=True,
+        gpu_memory_utilization=0.90,
     )
+    
+    # Format messages
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
+    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    
+    # Generate
+    sampling_params = SamplingParams(max_tokens=max_tokens, temperature=temperature, top_p=top_p)
+    outputs = llm.generate([prompt], sampling_params)
+    output = outputs[0]
+    
+    return {
+        "id": "chatcmpl-modal",
+        "object": "chat.completion",
+        "model": MODEL_NAME,
+        "choices": [{
+            "index": 0,
+            "message": {"role": "assistant", "content": output.outputs[0].text},
+            "finish_reason": output.outputs[0].finish_reason,
+        }],
+        "usage": {
+            "prompt_tokens": len(output.prompt_token_ids),
+            "completion_tokens": len(output.outputs[0].token_ids),
+            "total_tokens": len(output.prompt_token_ids) + len(output.outputs[0].token_ids),
+        },
+    }
 
 
 # Health check endpoint
