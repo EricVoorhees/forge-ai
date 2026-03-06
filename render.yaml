@@ -3,7 +3,7 @@
 
 databases:
   - name: forge-db
-    plan: starter
+    plan: basic
     databaseName: forge
     user: forge_user
     region: oregon
@@ -66,11 +66,9 @@ services:
       - key: RUNPOD_API_KEY
         sync: false  # Your RunPod API key
 
-  # Next.js Frontend
-  - type: web
+  # Next.js Frontend (Static Site)
+  - type: static_site
     name: forge-web
-    runtime: static
-    plan: free
     rootDir: web
     buildCommand: npm install && npm run build
     staticPublishPath: out
