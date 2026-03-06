@@ -29,10 +29,11 @@ class Settings(BaseSettings):
     stripe_price_pro: str = ""
     stripe_price_enterprise: str = ""
     
-    # Inference
-    inference_url: str = "http://localhost:8000"
+    # Inference (Fireworks.ai)
+    inference_url: str = "https://api.fireworks.ai/inference/v1"
     inference_timeout: float = 300.0
-    runpod_api_key: str = ""  # Required for RunPod serverless
+    fireworks_api_key: str = ""  # Required for Fireworks.ai
+    inference_model: str = "accounts/fireworks/models/qwen3-coder-480b-a35b-instruct"
     
     # Application
     app_env: str = "development"

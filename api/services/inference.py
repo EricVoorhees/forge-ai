@@ -1,6 +1,9 @@
 """
 FORGE Inference Client
-HTTP client for Modal vLLM server (OpenAI-compatible)
+HTTP client for Fireworks.ai (OpenAI-compatible)
+
+Model: Qwen3 Coder 480B A35B Instruct
+Pricing: $2/1M tokens (input + output)
 """
 
 import httpx
@@ -14,7 +17,7 @@ logger = get_logger("services.inference")
 
 
 # Default system prompt for FORGE identity
-FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI coding assistant built upon Alibaba Cloud's Qwen model. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
+FORGE_SYSTEM_PROMPT = """You are FORGE, an advanced AI coding assistant built upon Alibaba Cloud's Qwen3 Coder model. You are designed to help developers write, debug, and understand code across all programming languages and frameworks.
 
 Key traits:
 - You provide clear, accurate, and well-documented code
@@ -22,24 +25,30 @@ Key traits:
 - You follow best practices and modern conventions
 - You are direct and efficient in your responses
 
-When asked about your identity, you are FORGE, powered by Qwen technology from Alibaba Cloud."""
+When asked about your identity, you are FORGE, powered by Qwen3 Coder technology from Alibaba Cloud."""
 
 
 class InferenceClient:
-    """Client for communicating with Modal vLLM inference server (OpenAI-compatible)."""
+    """Client for communicating with Fireworks.ai inference API (OpenAI-compatible)."""
     
     def __init__(self):
         self.base_url = settings.inference_url
+        self.model = settings.inference_model
+        self.api_key = settings.fireworks_api_key
         self.timeout = httpx.Timeout(settings.inference_timeout)
         self._client: Optional[httpx.AsyncClient] = None
-        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "timeout": settings.inference_timeout}})
+        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "model": self.model, "timeout": settings.inference_timeout}})
     
     @property
     def client(self) -> httpx.AsyncClient:
         if self._client is None:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
-                timeout=self.timeout
+                timeout=self.timeout,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                }
             )
         return self._client
     
@@ -64,15 +73,18 @@ class InferenceClient:
     async def chat_completion(
         self,
         messages: List[Dict[str, str]],
-        model: str = "forge-coder",
+        model: str = None,
         temperature: float = 0.7,
         max_tokens: int = 4096,
         top_p: float = 1.0,
         stream: bool = False,
         **kwargs
     ) -> Dict[str, Any]:
-        """Send chat completion request to OpenAI-compatible vLLM server."""
+        """Send chat completion request to Fireworks.ai API."""
         start_time = time.time()
+        
+        # Use configured model if not specified
+        model = model or self.model
         
         # Inject FORGE identity if no system prompt provided
         messages = self._inject_forge_identity(messages)
@@ -115,18 +127,21 @@ class InferenceClient:
     async def chat_completion_stream(
         self,
         messages: List[Dict[str, str]],
-        model: str = "forge-coder",
+        model: str = None,
         temperature: float = 0.7,
         max_tokens: int = 4096,
         top_p: float = 1.0,
         **kwargs
     ) -> AsyncIterator[str]:
         """
-        Send streaming chat completion request to vLLM.
+        Send streaming chat completion request to Fireworks.ai.
         Yields SSE data chunks.
         """
         start_time = time.time()
         chunk_count = 0
+        
+        # Use configured model if not specified
+        model = model or self.model
         
         # Inject FORGE identity if no system prompt provided
         messages = self._inject_forge_identity(messages)

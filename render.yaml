@@ -1,7 +1,7 @@
 # Render Blueprint - FORGE API
 # Database: Neon PostgreSQL
 # Redis: Upstash Redis (via Fly.io)
-# Inference: RunPod
+# Inference: Fireworks.ai (Qwen3 Coder 480B)
 
 services:
   # FastAPI Backend
@@ -44,6 +44,10 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
-      # Modal Inference (vLLM OpenAI-compatible server) - Qwen 2.5 72B AWQ
+      # Fireworks.ai Inference - Qwen3 Coder 480B ($2/1M tokens)
       - key: INFERENCE_URL
-        value: "https://voorheeseric69--forge-vllm-72b-serve.modal.run"
+        value: "https://api.fireworks.ai/inference/v1"
+      - key: FIREWORKS_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: INFERENCE_MODEL
+        value: "accounts/fireworks/models/qwen3-coder-480b-a35b-instruct"
