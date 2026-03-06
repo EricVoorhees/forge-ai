@@ -31,9 +31,9 @@ services:
       # Neon PostgreSQL
       - key: DATABASE_URL
         value: "postgresql://neondb_owner:npg_zTMpO0kKBn5h@ep-gentle-cake-ais3bl75-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require"
-      # Fly.io Upstash Redis
+      # Upstash Redis
       - key: REDIS_URL
-        value: "rediss://default:dc66d5b7275b48458d5a51ce9572584f@fly-forge-redis-prod.upstash.io:6379"
+        value: "rediss://default:ARBiAAImcDE3MDBkMTNlNWQyMDQ0ZDA1YjI1ZmFiYWVkMzhhYWQ2Y3AxNDE5NA@popular-lioness-4194.upstash.io:6379"
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: JWT_ALGORITHM

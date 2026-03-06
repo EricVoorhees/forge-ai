@@ -1,0 +1,43 @@
+function Component_2_9() {
+  return (
+    <div
+      className="w-[calc(50%_-_10px)] relative overflow-x-hidden overflow-y-hidden"
+      data-component-id="Component_2_9"
+    >
+      <div
+        className="text-[#f7f8fc] font-semibold text-[58.8px] text-center w-full aspect-[5_/_3] flex overflow-x-hidden overflow-y-hidden justify-center items-center caret-[#f7f8fc] mb-6 rounded-br-[12px] rounded-t-[12px] rounded-bl-[12px]"
+        data-style-id="style-4-1772840596782"
+      >
+        <img
+          src="https://img.alicdn.com/imgextra/i1/O1CN014iRssN1GQdSggPKAY_!!6000000000617-2-tps-1590-954.png"
+          alt="Search"
+          className="align-middle w-full block caret-[#f7f8fc]"
+        />
+      </div>
+      <div className="text-[#f7f8fc] leading-[30px] font-semibold text-[20px] text-ellipsis [white-space-collapse:collapse] [text-wrap-mode:nowrap] min-h-[30px] flex overflow-x-hidden overflow-y-hidden justify-between items-center caret-[#f7f8fc] mb-4">
+        <span className="[text-wrap-mode:nowrap] block caret-[#f7f8fc]">
+          Search
+        </span>
+      </div>
+      <div className="text-[#797b89] leading-[24px] text-ellipsis w-full h-[72px] min-h-6 max-h-[72px] flow-root overflow-x-hidden overflow-y-hidden caret-[#797b89] my-4">
+        Harness the power of intelligent search with Qwen. Quickly find answers,
+        resources, or inspiration from across the web. With advanced filtering
+        and contextual understanding, Qwen delivers precise results that match
+        your query. Whether it’s researching a topic, finding recipes, or
+        discovering new trends, Qwen ensures you have access to the most
+        relevant information at your fingertips.
+      </div>
+      <div className="flex items-center gap-y-3 gap-x-3">
+        <div className="text-[#797b89] leading-[24px] min-h-6 caret-[#797b89]">
+          2025/03/27
+        </div>
+        <div className="bg-[#797b89] w-1 h-1 my-1.5 rounded-br-[50%] rounded-t-[50%] rounded-bl-[50%]"></div>
+        <div className="text-[#797b89] leading-[24px] min-h-6 caret-[#797b89]">
+          Product
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Component_2_9;
