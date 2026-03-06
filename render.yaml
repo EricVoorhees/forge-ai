@@ -1,6 +1,6 @@
 # Render Blueprint - FORGE API
-# Database: Fly.io PostgreSQL
-# Redis: Fly.io Upstash Redis
+# Database: Neon PostgreSQL
+# Redis: Upstash Redis (via Fly.io)
 # Inference: RunPod
 
 services:
