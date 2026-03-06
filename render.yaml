@@ -44,6 +44,6 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
-      # Modal Inference (vLLM OpenAI-compatible server)
+      # Modal Inference (vLLM OpenAI-compatible server) - Qwen 2.5 72B AWQ
       - key: INFERENCE_URL
-        value: "https://voorheeseric69--forge-vllm-serve.modal.run"
+        value: "https://voorheeseric69--forge-vllm-72b-serve.modal.run"

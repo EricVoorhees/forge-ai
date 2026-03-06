@@ -31,7 +31,7 @@ N_GPU = 1
 MINUTES = 60
 VLLM_PORT = 8000
 
-app = modal.App("forge-vllm")
+app = modal.App("forge-vllm-72b")
 
 
 @app.function(
