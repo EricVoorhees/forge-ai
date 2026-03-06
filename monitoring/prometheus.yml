@@ -1,0 +1,41 @@
+# FORGE Prometheus Configuration
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'forge'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+rule_files:
+  - "alerts/*.yml"
+
+scrape_configs:
+  # API Server
+  - job_name: 'forge-api'
+    static_configs:
+      - targets: ['forge-api:8000']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # GPU Inference Node
+  - job_name: 'forge-inference'
+    static_configs:
+      - targets: ['gpu-node:8000']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Redis (via redis_exporter)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

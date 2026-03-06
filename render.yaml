@@ -1,0 +1,97 @@
+# Render Blueprint - Deploy all FORGE services with one click
+# Usage: Go to Render Dashboard → Blueprints → New Blueprint → Connect this repo
+
+databases:
+  - name: forge-db
+    plan: starter
+    databaseName: forge
+    user: forge_user
+    region: oregon
+
+services:
+  # Redis Cache
+  - type: redis
+    name: forge-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  # FastAPI Backend
+  - type: web
+    name: forge-api
+    runtime: python
+    plan: starter
+    region: oregon
+    rootDir: api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: forge-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: forge-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "15"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: CORS_ORIGINS
+        sync: false  # Set manually after deployment
+      - key: STRIPE_SECRET_KEY
+        sync: false  # Set manually - sensitive
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false  # Set manually - sensitive
+      - key: STRIPE_PRICE_STARTER
+        sync: false  # Set manually after creating Stripe products
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_ENTERPRISE
+        sync: false
+      - key: INFERENCE_URL
+        sync: false  # Set after RunPod deployment
+
+  # Next.js Frontend
+  - type: web
+    name: forge-web
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: web
+    buildCommand: npm install && npm run build
+    staticPublishPath: out
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          name: forge-api
+          type: web
+          property: url
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false  # Set manually

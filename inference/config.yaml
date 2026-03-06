@@ -1,0 +1,59 @@
+# FORGE vLLM Configuration
+# V1: DeepSeek Coder V2 on 4x H100
+# V2: Upgrade to 400B MoE on 8x H100 when scaling
+
+# ============================================
+# V1 CONFIGURATION (Current)
+# ============================================
+model:
+  path: deepseek-ai/DeepSeek-Coder-V2-Instruct
+  served_name: forge-coder
+  dtype: bfloat16
+  trust_remote_code: true
+
+parallelism:
+  tensor_parallel_size: 4  # 4x H100 for V1
+  pipeline_parallel_size: 1
+
+memory:
+  gpu_memory_utilization: 0.9
+  swap_space: 4  # GB
+
+limits:
+  max_model_len: 32768
+  max_num_seqs: 128
+  max_num_batched_tokens: 32768
+
+server:
+  host: 0.0.0.0
+  port: 8001
+
+scheduling:
+  scheduler_delay_factor: 0.0
+  enable_chunked_prefill: true
+
+logging:
+  disable_log_requests: true
+  disable_log_stats: false
+
+# ============================================
+# V2 CONFIGURATION (Uncomment when scaling)
+# ============================================
+# model:
+#   path: /models/qwen-400b
+#   served_name: forge-400b
+#   dtype: bfloat16
+#   trust_remote_code: true
+#
+# parallelism:
+#   tensor_parallel_size: 8  # 8x H100 for V2
+#   pipeline_parallel_size: 1
+#
+# memory:
+#   gpu_memory_utilization: 0.95
+#   swap_space: 4
+#
+# limits:
+#   max_model_len: 32768
+#   max_num_seqs: 256
+#   max_num_batched_tokens: 65536
