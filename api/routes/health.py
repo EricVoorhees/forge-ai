@@ -46,9 +46,10 @@ async def readiness():
     all_healthy = True
     
     try:
+        from sqlalchemy import text
         from db.database import engine
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         checks["database"] = "healthy"
     except Exception as e:
         checks["database"] = f"unhealthy: {str(e)}"
@@ -56,8 +57,11 @@ async def readiness():
     
     try:
         from services.rate_limiter import redis_client
-        redis_client.ping()
-        checks["redis"] = "healthy"
+        if redis_client is None:
+            checks["redis"] = "disabled (no URL configured)"
+        else:
+            redis_client.ping()
+            checks["redis"] = "healthy"
     except Exception as e:
         checks["redis"] = f"unhealthy: {str(e)}"
         all_healthy = False

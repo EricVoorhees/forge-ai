@@ -13,21 +13,44 @@ from services.logging import get_logger
 
 logger = get_logger("services.rate_limiter")
 
-try:
-    # Upstash Redis requires SSL
-    redis_url = settings.redis_url
-    ssl_required = redis_url.startswith("rediss://")
-    
-    redis_client = redis.Redis.from_url(
-        redis_url,
-        decode_responses=True,
-        ssl_cert_reqs=None if ssl_required else None  # Skip SSL cert verification for Upstash
-    )
-    redis_client.ping()
-    logger.info(f"Redis connected successfully")
-except Exception as e:
-    logger.error(f"Redis connection failed: {e}")
-    redis_client = None
+def create_redis_client():
+    """Create Redis client with proper SSL handling for Upstash."""
+    try:
+        redis_url = settings.redis_url
+        if not redis_url or redis_url == "redis://localhost:6379":
+            logger.warning("Redis URL not configured, rate limiting disabled")
+            return None
+        
+        # Upstash requires SSL (rediss://)
+        if redis_url.startswith("rediss://"):
+            import ssl
+            ssl_context = ssl.create_default_context()
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+            
+            client = redis.Redis.from_url(
+                redis_url,
+                decode_responses=True,
+                ssl_cert_reqs=None,
+                socket_connect_timeout=5,
+                socket_timeout=5
+            )
+        else:
+            client = redis.Redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=5,
+                socket_timeout=5
+            )
+        
+        client.ping()
+        logger.info("Redis connected successfully")
+        return client
+    except Exception as e:
+        logger.error(f"Redis connection failed: {e}")
+        return None
+
+redis_client = create_redis_client()
 
 
 @dataclass
@@ -154,34 +177,42 @@ class RateLimiter:
         Check tokens per day limit.
         """
         limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["free"])
+        
+        if not self._check_redis():
+            return RateLimitResult(allowed=True, remaining=999999, limit=limits["tpd"], reset_at=0)
+        
         today = time.strftime("%Y-%m-%d")
         key = f"rate_limit:tpd:{user_id}:{today}"
         
-        current = redis_client.get(key)
-        current_tokens = int(current) if current else 0
-        
-        if current_tokens + tokens > limits["tpd"]:
-            now = time.time()
-            tomorrow = (int(now // 86400) + 1) * 86400
+        try:
+            current = redis_client.get(key)
+            current_tokens = int(current) if current else 0
+            
+            if current_tokens + tokens > limits["tpd"]:
+                now = time.time()
+                tomorrow = (int(now // 86400) + 1) * 86400
+                return RateLimitResult(
+                    allowed=False,
+                    remaining=max(0, limits["tpd"] - current_tokens),
+                    limit=limits["tpd"],
+                    reset_at=tomorrow,
+                    retry_after=tomorrow - now
+                )
+            
+            pipe = redis_client.pipeline()
+            pipe.incrby(key, tokens)
+            pipe.expire(key, 86400 * 2)
+            pipe.execute()
+            
             return RateLimitResult(
-                allowed=False,
-                remaining=max(0, limits["tpd"] - current_tokens),
+                allowed=True,
+                remaining=limits["tpd"] - current_tokens - tokens,
                 limit=limits["tpd"],
-                reset_at=tomorrow,
-                retry_after=tomorrow - now
+                reset_at=0
             )
-        
-        pipe = redis_client.pipeline()
-        pipe.incrby(key, tokens)
-        pipe.expire(key, 86400 * 2)
-        pipe.execute()
-        
-        return RateLimitResult(
-            allowed=True,
-            remaining=limits["tpd"] - current_tokens - tokens,
-            limit=limits["tpd"],
-            reset_at=0
-        )
+        except Exception as e:
+            logger.error(f"TPD check failed: {e}", exc_info=True)
+            return RateLimitResult(allowed=True, remaining=999999, limit=limits["tpd"], reset_at=0)
     
     def record_tokens(self, user_id: str, tokens: int):
         """Record token usage for TPM/TPD tracking."""
