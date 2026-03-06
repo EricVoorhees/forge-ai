@@ -16,10 +16,10 @@ services:
     envVars:
       # Fly.io PostgreSQL (external connection)
       - key: DATABASE_URL
-        value: "postgres://postgres:mmv5iIvRk4MVant@forge-db-prod.fly.dev:5432/postgres?sslmode=require"
+        value: "postgres://postgres:mmv5iIvRk4MVant@forge-db-prod.fly.dev:5432/postgres?ssl=require"
       # Fly.io Upstash Redis
       - key: REDIS_URL
-        value: "redis://default:dc66d5b7275b48458d5a51ce9572584f@fly-forge-redis-prod.upstash.io:6379"
+        value: "rediss://default:dc66d5b7275b48458d5a51ce9572584f@fly-forge-redis-prod.upstash.io:6379"
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: JWT_ALGORITHM
