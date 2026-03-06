@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
+import asyncio
 
 from config import settings
 from db.database import init_db, close_db
@@ -37,8 +38,23 @@ async def lifespan(app: FastAPI):
     logger.info("="*60)
     
     logger.info("Initializing database...")
-    await init_db()
-    logger.info("Database initialized successfully")
+    # Retry database connection with backoff (services may still be starting)
+    max_retries = 10
+    retry_delay = 5
+    for attempt in range(max_retries):
+        try:
+            await init_db()
+            logger.info("Database initialized successfully")
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Database connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.info(f"Retrying in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 1.5, 30)  # Exponential backoff, max 30s
+            else:
+                logger.error(f"Database connection failed after {max_retries} attempts: {e}")
+                raise
     
     yield
     
