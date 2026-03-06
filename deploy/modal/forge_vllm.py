@@ -17,8 +17,8 @@ vllm_image = (
     .env({"HF_XET_HIGH_PERFORMANCE": "1"})  # Faster model transfers
 )
 
-# Model configuration
-MODEL_NAME = "Qwen/Qwen2.5-Coder-7B-Instruct"
+# Model configuration - 72B AWQ quantized for H100 (fits in 80GB)
+MODEL_NAME = "Qwen/Qwen2.5-72B-Instruct-AWQ"
 MODEL_REVISION = None  # Use latest
 
 # Volumes for caching
@@ -36,16 +36,16 @@ app = modal.App("forge-vllm")
 
 @app.function(
     image=vllm_image,
-    gpu=f"A10G:{N_GPU}",  # A10G is cheaper, sufficient for 7B model
+    gpu=f"H100:{N_GPU}",  # H100 required for 32B model
     scaledown_window=5 * MINUTES,  # Keep warm for 5 minutes
-    timeout=10 * MINUTES,  # Container startup timeout
+    timeout=15 * MINUTES,  # Container startup timeout (longer for 32B)
     volumes={
         "/root/.cache/huggingface": hf_cache_vol,
         "/root/.cache/vllm": vllm_cache_vol,
     },
 )
 @modal.concurrent(max_inputs=16)  # Handle 16 concurrent requests per replica
-@modal.web_server(port=VLLM_PORT, startup_timeout=10 * MINUTES)
+@modal.web_server(port=VLLM_PORT, startup_timeout=15 * MINUTES)
 def serve():
     """Run vLLM's OpenAI-compatible server."""
     import subprocess
