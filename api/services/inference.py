@@ -96,7 +96,7 @@ class InferenceClient:
         
         try:
             response = await self.client.post(
-                "/v1/chat/completions",
+                "/chat/completions",
                 json=payload
             )
             response.raise_for_status()
@@ -153,7 +153,7 @@ class InferenceClient:
         try:
             async with self.client.stream(
                 "POST",
-                "/v1/chat/completions",
+                "/chat/completions",
                 json=payload
             ) as response:
                 response.raise_for_status()
