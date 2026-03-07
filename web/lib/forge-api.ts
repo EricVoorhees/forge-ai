@@ -152,3 +152,80 @@ export async function createPortal(
   if (!response.ok) throw new Error("Failed to create portal");
   return response.json();
 }
+
+// Recent API calls
+interface RecentCall {
+  id: string;
+  tokens_input: number;
+  tokens_output: number;
+  total_tokens: number;
+  cost: number;
+  timestamp: string;
+}
+
+export async function getRecentCalls(forgeToken: string, limit: number = 50): Promise<{ calls: RecentCall[] }> {
+  const response = await fetch(`${API_URL}/v1/usage/recent?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${forgeToken}` },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch recent calls");
+  return response.json();
+}
+
+// Daily usage for charts
+interface DailyUsage {
+  date: string;
+  tokens_input: number;
+  tokens_output: number;
+  total_tokens: number;
+  cost: number;
+  requests: number;
+}
+
+export async function getDailyUsage(forgeToken: string, days: number = 30): Promise<{ data: DailyUsage[] }> {
+  const response = await fetch(`${API_URL}/v1/usage/daily?days=${days}`, {
+    headers: { Authorization: `Bearer ${forgeToken}` },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch daily usage");
+  return response.json();
+}
+
+// Chat completion (for playground)
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+interface ChatCompletionResponse {
+  id: string;
+  choices: { message: ChatMessage; finish_reason: string }[];
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+}
+
+export async function chatCompletion(
+  apiKey: string,
+  messages: ChatMessage[],
+  options: { temperature?: number; max_tokens?: number; stream?: boolean } = {}
+): Promise<ChatCompletionResponse> {
+  const response = await fetch(`${API_URL}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "forge-671b",
+      messages,
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.max_tokens ?? 4096,
+      stream: options.stream ?? false,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: "Request failed" }));
+    throw new Error(error.detail || "Chat completion failed");
+  }
+  return response.json();
+}

@@ -77,3 +77,36 @@ async def get_rate_limits(
     
     usage = rate_limiter.get_usage(str(user.id), plan)
     return RateLimitResponse(**usage)
+
+
+@router.get("/recent")
+async def get_recent_calls(
+    limit: int = Query(50, ge=1, le=100, description="Number of recent calls"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get recent API calls for the user."""
+    from db.models import UsageLog
+    from sqlalchemy import select
+    
+    result = await db.execute(
+        select(UsageLog)
+        .where(UsageLog.user_id == user.id)
+        .order_by(UsageLog.timestamp.desc())
+        .limit(limit)
+    )
+    logs = result.scalars().all()
+    
+    return {
+        "calls": [
+            {
+                "id": str(log.id),
+                "tokens_input": log.tokens_input,
+                "tokens_output": log.tokens_output,
+                "total_tokens": log.tokens_input + log.tokens_output,
+                "cost": float(log.cost),
+                "timestamp": log.timestamp.isoformat()
+            }
+            for log in logs
+        ]
+    }

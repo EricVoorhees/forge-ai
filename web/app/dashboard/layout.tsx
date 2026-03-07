@@ -6,6 +6,7 @@ import { UserButton } from "@clerk/nextjs";
 
 const navItems = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/playground", label: "Playground" },
   { href: "/dashboard/api-keys", label: "API Keys" },
   { href: "/dashboard/usage", label: "Usage" },
   { href: "/dashboard/billing", label: "Billing" },
@@ -45,7 +46,7 @@ export default function DashboardLayout({
             
             {/* Playground Button */}
             <Link
-              href="/dashboard"
+              href="/dashboard/playground"
               className="flex items-center gap-2 px-4 py-2 border border-[#27272a] text-white text-sm font-medium rounded-full hover:bg-[#18181b] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
