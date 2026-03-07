@@ -108,13 +108,13 @@ export default function Home() {
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
             <Link
-              href="/login"
+              href="/sign-in"
               className="hidden md:flex text-[#a1a1aa] text-sm hover:text-white transition-colors"
             >
               Sign In
             </Link>
             <Link
-              href="/register"
+              href="/sign-up"
               className="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:bg-white/90 transition-colors"
             >
               Get Started
@@ -259,7 +259,7 @@ print(response.json()["choices"][0]["message"]["content"])`}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href="/register"
+                href="/sign-up"
                 className="bg-white text-black px-8 py-3 rounded-full font-medium hover:bg-white/90 transition-colors"
               >
                 Get Started Free

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/store";
-import { getApiKeys, createApiKey, revokeApiKey } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { useForgeAuth } from "@/lib/use-forge-auth";
+import { getApiKeys, createApiKey, revokeApiKey } from "@/lib/forge-api";
 
 interface ApiKey {
   id: string;
@@ -14,31 +14,39 @@ interface ApiKey {
 }
 
 export default function ApiKeysPage() {
-  const { accessToken } = useAuthStore();
+  const { forgeToken, isLoading: authLoading } = useForgeAuth();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [showNewKey, setShowNewKey] = useState<string | null>(null);
 
-  const loadKeys = async () => {
-    if (accessToken) {
-      const data = await getApiKeys(accessToken);
-      setKeys(data);
+  const loadKeys = useCallback(async () => {
+    if (forgeToken) {
+      try {
+        const data = await getApiKeys(forgeToken);
+        setKeys(data);
+      } catch (err) {
+        console.error("Failed to load keys:", err);
+      }
       setLoading(false);
     }
-  };
+  }, [forgeToken]);
 
   useEffect(() => {
-    loadKeys();
-  }, [accessToken]);
+    if (forgeToken) {
+      loadKeys();
+    } else if (!authLoading) {
+      setLoading(false);
+    }
+  }, [forgeToken, authLoading, loadKeys]);
 
   const handleCreate = async () => {
-    if (!accessToken || !newKeyName.trim()) return;
+    if (!forgeToken || !newKeyName.trim()) return;
     setCreating(true);
     try {
-      const result = await createApiKey(accessToken, newKeyName.trim());
-      setShowNewKey(result.key);
+      const result = await createApiKey(forgeToken, newKeyName.trim());
+      setShowNewKey(result.key || null);
       setNewKeyName("");
       await loadKeys();
     } finally {
@@ -47,14 +55,14 @@ export default function ApiKeysPage() {
   };
 
   const handleRevoke = async (keyId: string) => {
-    if (!accessToken) return;
+    if (!forgeToken) return;
     if (!confirm("Are you sure you want to revoke this API key?")) return;
-    await revokeApiKey(accessToken, keyId);
+    await revokeApiKey(forgeToken, keyId);
     await loadKeys();
   };
 
-  if (loading) {
-    return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || loading) {
+    return <div className="text-zinc-400">Loading...</div>;
   }
 
   return (

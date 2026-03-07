@@ -50,8 +50,9 @@ class User(Base):
     
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=True)  # Nullable for Clerk users
     name = Column(String(255))
+    clerk_id = Column(String(255), unique=True, nullable=True, index=True)  # Clerk user ID
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     email_verified = Column(Boolean, default=False)

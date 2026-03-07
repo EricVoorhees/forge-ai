@@ -181,3 +181,64 @@ async def get_me(user: User = Depends(get_current_user)):
         name=user.name,
         created_at=user.created_at.isoformat()
     )
+
+
+class ClerkSyncRequest(BaseModel):
+    clerk_id: str
+    email: EmailStr
+    name: Optional[str] = None
+
+
+class ClerkSyncResponse(BaseModel):
+    id: str
+    clerk_id: str
+    email: str
+    name: Optional[str] = None
+    forge_token: str
+
+
+@router.post("/clerk-sync", response_model=ClerkSyncResponse)
+async def clerk_sync(request: ClerkSyncRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Sync a Clerk user to FORGE backend.
+    Creates user if not exists, returns FORGE JWT token for API access.
+    """
+    logger.info(f"Clerk sync for: {request.email}", extra={"extra_data": {"clerk_id": request.clerk_id}})
+    
+    # Check if user exists by clerk_id or email
+    result = await db.execute(
+        select(User).where(
+            (User.clerk_id == request.clerk_id) | (User.email == request.email)
+        )
+    )
+    user = result.scalar_one_or_none()
+    
+    if user:
+        # Update clerk_id if not set
+        if not user.clerk_id:
+            user.clerk_id = request.clerk_id
+        if request.name and not user.name:
+            user.name = request.name
+        logger.info(f"Clerk sync: existing user", extra={"user_id": str(user.id)})
+    else:
+        # Create new user
+        user = User(
+            email=request.email,
+            clerk_id=request.clerk_id,
+            name=request.name,
+            password_hash=""  # No password for Clerk users
+        )
+        db.add(user)
+        await db.flush()
+        logger.info(f"Clerk sync: new user created", extra={"user_id": str(user.id)})
+    
+    # Generate FORGE token for this user
+    forge_token = create_access_token(str(user.id), user.email)
+    
+    return ClerkSyncResponse(
+        id=str(user.id),
+        clerk_id=request.clerk_id,
+        email=user.email,
+        name=user.name,
+        forge_token=forge_token
+    )

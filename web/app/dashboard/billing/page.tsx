@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/store";
-import { getSubscription, createCheckout, createPortal } from "@/lib/api";
+import { useForgeAuth } from "@/lib/use-forge-auth";
+import { getSubscription, createCheckout, createPortal } from "@/lib/forge-api";
 
 const plans = [
   {
@@ -26,25 +26,28 @@ const plans = [
 ];
 
 export default function BillingPage() {
-  const { accessToken } = useAuthStore();
+  const { forgeToken, isLoading: authLoading } = useForgeAuth();
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
 
   useEffect(() => {
-    if (accessToken) {
-      getSubscription(accessToken)
+    if (forgeToken) {
+      getSubscription(forgeToken)
         .then(setSubscription)
+        .catch(console.error)
         .finally(() => setLoading(false));
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [accessToken]);
+  }, [forgeToken, authLoading]);
 
   const handleUpgrade = async (plan: string) => {
-    if (!accessToken) return;
+    if (!forgeToken) return;
     setUpgrading(plan);
     try {
       const { checkout_url } = await createCheckout(
-        accessToken,
+        forgeToken,
         plan,
         `${window.location.origin}/dashboard/billing?success=true`,
         `${window.location.origin}/dashboard/billing?canceled=true`
@@ -57,10 +60,10 @@ export default function BillingPage() {
   };
 
   const handleManage = async () => {
-    if (!accessToken) return;
+    if (!forgeToken) return;
     try {
       const { portal_url } = await createPortal(
-        accessToken,
+        forgeToken,
         `${window.location.origin}/dashboard/billing`
       );
       window.location.href = portal_url;
@@ -69,8 +72,8 @@ export default function BillingPage() {
     }
   };
 
-  if (loading) {
-    return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || loading) {
+    return <div className="text-zinc-400">Loading...</div>;
   }
 
   const currentPlan = subscription?.plan || "free";

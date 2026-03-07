@@ -1,31 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/store";
-import { getUsage, getRateLimits } from "@/lib/api";
+import { useForgeAuth } from "@/lib/use-forge-auth";
+import { getUsage, getRateLimits } from "@/lib/forge-api";
 
 export default function DashboardPage() {
-  const { accessToken } = useAuthStore();
+  const { forgeToken, isLoading: authLoading } = useForgeAuth();
   const [usage, setUsage] = useState<any>(null);
   const [limits, setLimits] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (accessToken) {
+    if (forgeToken) {
       Promise.all([
-        getUsage(accessToken),
-        getRateLimits(accessToken),
+        getUsage(forgeToken),
+        getRateLimits(forgeToken),
       ])
         .then(([usageData, limitsData]) => {
           setUsage(usageData);
           setLimits(limitsData);
         })
+        .catch(console.error)
         .finally(() => setLoading(false));
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [accessToken]);
+  }, [forgeToken, authLoading]);
 
-  if (loading) {
-    return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || loading) {
+    return <div className="text-zinc-400">Loading...</div>;
   }
 
   return (
