@@ -214,9 +214,10 @@ export default function Home() {
         <div className="h-16 flex justify-between items-center px-6 md:px-12 max-w-[1400px] mx-auto">
           {/* Logo & Nav */}
           <div className="flex items-center">
-            <div className="flex items-center gap-2 mr-12">
-              <Image src="/forge-logo.png" alt="Open Frame" width={32} height={32} className="rounded" />
+            <div className="flex items-center gap-3 mr-12">
               <span className="text-xl font-semibold text-white tracking-tight">Open Frame</span>
+              <span className="text-[#52525b] text-sm font-light">×</span>
+              <Image src="/forge-logo.png" alt="FORGE" width={28} height={28} />
             </div>
             <nav className="hidden md:flex items-center gap-8">
               <Link href="/docs" className="text-[#a1a1aa] text-sm hover:text-white transition-colors">
