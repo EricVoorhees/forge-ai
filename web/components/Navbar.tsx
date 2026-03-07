@@ -6,7 +6,14 @@ import { useState } from "react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 // Navigation Dropdown Component
-function NavDropdown({ label, items }: { label: string; items: { title: string; href: string; desc?: string }[] }) {
+interface NavItem {
+  title: string;
+  href: string;
+  desc: string;
+  icon: React.ReactNode;
+}
+
+function NavDropdown({ label, items }: { label: string; items: NavItem[] }) {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
@@ -23,18 +30,25 @@ function NavDropdown({ label, items }: { label: string; items: { title: string; 
       </button>
       
       {isOpen && (
-        <div className="absolute top-full left-0 pt-2 z-50">
-          <div className="bg-[#18181b] border border-white/10 rounded-xl p-2 min-w-[200px] shadow-xl">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <div className="text-white text-sm font-medium">{item.title}</div>
-                {item.desc && <div className="text-[#71717a] text-xs mt-0.5">{item.desc}</div>}
-              </Link>
-            ))}
+        <div className="absolute top-full left-0 pt-3 z-50">
+          <div className="bg-[#141416] border border-white/10 rounded-2xl p-3 min-w-[320px] shadow-2xl">
+            <div className="space-y-1">
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-start gap-4 px-3 py-3 rounded-xl hover:bg-white/5 transition-colors group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/60 group-hover:text-white group-hover:bg-white/10 group-hover:border-white/20 transition-all flex-shrink-0">
+                    {item.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white text-sm font-medium mb-0.5">{item.title}</div>
+                    <div className="text-white/50 text-xs leading-relaxed">{item.desc}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -48,58 +62,131 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   
   return (
     <div className="fixed inset-0 z-50 md:hidden">
-      <div className="fixed inset-0 bg-black/60" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-[280px] bg-[#0a0a0a] border-l border-white/10 p-6">
-        <div className="flex justify-end mb-8">
-          <button onClick={onClose} className="text-[#a1a1aa] hover:text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-[#0a0a0a] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <div className="flex items-center gap-2">
+            <Image src="/forge-logo.png" alt="Open Frame" width={28} height={28} />
+            <span className="text-lg font-semibold text-white tracking-tight">Open Frame</span>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-all">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
         
-        <nav className="space-y-6">
-          <div>
-            <div className="text-[#525252] text-xs uppercase tracking-wider mb-3">Product</div>
-            <div className="space-y-2">
-              <Link href="/dashboard" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>API Platform</Link>
-              <Link href="/dashboard/playground" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Playground</Link>
-              <Link href="/pricing" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Pricing</Link>
+        <nav className="px-6 py-8">
+          {/* Product Section */}
+          <div className="mb-8">
+            <div className="text-white/40 text-xs uppercase tracking-wider mb-4 font-medium">Product</div>
+            <div className="space-y-1">
+              <Link href="/dashboard" className="flex items-center gap-4 px-4 py-4 rounded-xl bg-white/[0.02] hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">API Platform</div>
+                  <div className="text-white/50 text-sm">Access the FORGE API</div>
+                </div>
+              </Link>
+              <Link href="/dashboard/playground" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Playground</div>
+                  <div className="text-white/50 text-sm">Test the model</div>
+                </div>
+              </Link>
+              <Link href="/audit" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Forge Audit</div>
+                  <div className="text-white/50 text-sm">Code security analysis</div>
+                </div>
+              </Link>
+              <Link href="/pricing" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Pricing</div>
+                  <div className="text-white/50 text-sm">Plans & usage</div>
+                </div>
+              </Link>
             </div>
           </div>
           
-          <div>
-            <div className="text-[#525252] text-xs uppercase tracking-wider mb-3">FORGE 1</div>
-            <div className="space-y-2">
-              <Link href="/research/model" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Architecture</Link>
-              <Link href="/research/benchmarks" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Benchmarks</Link>
+          {/* FORGE 1 Section */}
+          <div className="mb-8">
+            <div className="text-white/40 text-xs uppercase tracking-wider mb-4 font-medium">FORGE 1</div>
+            <div className="space-y-1">
+              <Link href="/research/model" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Architecture</div>
+                  <div className="text-white/50 text-sm">Model specifications</div>
+                </div>
+              </Link>
+              <Link href="/research/benchmarks" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Benchmarks</div>
+                  <div className="text-white/50 text-sm">Performance data</div>
+                </div>
+              </Link>
             </div>
           </div>
           
-          <div>
-            <div className="text-[#525252] text-xs uppercase tracking-wider mb-3">Company</div>
-            <div className="space-y-2">
-              <Link href="/about" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>About</Link>
-              <Link href="/blog" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Blog</Link>
-              <Link href="/careers" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Careers</Link>
+          {/* Resources Section */}
+          <div className="mb-8">
+            <div className="text-white/40 text-xs uppercase tracking-wider mb-4 font-medium">Resources</div>
+            <div className="space-y-1">
+              <Link href="/docs" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Documentation</div>
+                  <div className="text-white/50 text-sm">Guides & API reference</div>
+                </div>
+              </Link>
+              <Link href="/blog" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+                </div>
+                <div>
+                  <div className="text-white text-base font-medium">Blog</div>
+                  <div className="text-white/50 text-sm">News & updates</div>
+                </div>
+              </Link>
             </div>
           </div>
           
-          <div>
-            <Link href="/docs" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Documentation</Link>
-          </div>
-          
+          {/* Auth Section */}
           <div className="pt-6 border-t border-white/10">
             <SignedOut>
               <div className="space-y-3">
-                <Link href="/sign-in" className="block text-[#a1a1aa] text-sm hover:text-white" onClick={onClose}>Sign In</Link>
-                <Link href="/sign-up" className="block bg-white text-black text-sm font-medium px-4 py-2 rounded-full text-center" onClick={onClose}>Get Started</Link>
+                <Link href="/sign-in" className="flex items-center justify-center gap-2 w-full px-6 py-4 rounded-xl border border-white/20 text-white text-base font-medium hover:bg-white/5 transition-colors" onClick={onClose}>
+                  Sign In
+                </Link>
+                <Link href="/sign-up" className="flex items-center justify-center gap-2 w-full px-6 py-4 rounded-xl bg-white text-black text-base font-medium hover:bg-white/90 transition-colors" onClick={onClose}>
+                  Get Started
+                </Link>
               </div>
             </SignedOut>
             <SignedIn>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 px-4 py-4">
                 <UserButton afterSignOutUrl="/" />
-                <span className="text-[#a1a1aa] text-sm">Account</span>
+                <span className="text-white text-base font-medium">My Account</span>
               </div>
             </SignedIn>
           </div>
@@ -109,7 +196,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   );
 }
 
-export default function Navbar() {
+export default function Navbar({ hideDocs = false }: { hideDocs?: boolean }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   return (
@@ -128,32 +215,80 @@ export default function Navbar() {
               <NavDropdown 
                 label="Product" 
                 items={[
-                  { title: "API Platform", href: "/dashboard", desc: "Build with FORGE" },
-                  { title: "Playground", href: "/dashboard/playground", desc: "Test the model" },
-                  { title: "Pricing", href: "/pricing", desc: "Plans & usage" },
+                  { 
+                    title: "API Platform", 
+                    href: "/dashboard", 
+                    desc: "Access the FORGE API, manage keys, and monitor usage",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  },
+                  { 
+                    title: "Playground", 
+                    href: "/dashboard/playground", 
+                    desc: "Test prompts and explore model capabilities interactively",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  },
+                  { 
+                    title: "Forge Audit", 
+                    href: "/audit", 
+                    desc: "AI-powered code security analysis and vulnerability detection",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                  },
+                  { 
+                    title: "Pricing", 
+                    href: "/pricing", 
+                    desc: "Flexible plans for teams of all sizes with transparent pricing",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  },
                 ]} 
               />
               <NavDropdown 
                 label="FORGE 1" 
                 items={[
-                  { title: "Architecture", href: "/research/model", desc: "Model specifications" },
-                  { title: "Benchmarks", href: "/research/benchmarks", desc: "Performance data" },
+                  { 
+                    title: "Architecture", 
+                    href: "/research/model", 
+                    desc: "Deep dive into the 671B MoE model design and specifications",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                  },
+                  { 
+                    title: "Benchmarks", 
+                    href: "/research/benchmarks", 
+                    desc: "Performance comparisons across coding and reasoning tasks",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  },
                 ]} 
               />
               <NavDropdown 
                 label="Company" 
                 items={[
-                  { title: "About", href: "/about", desc: "Our mission" },
-                  { title: "Blog", href: "/blog", desc: "News & updates" },
-                  { title: "Careers", href: "/careers", desc: "Join the team" },
+                  { 
+                    title: "About", 
+                    href: "/about", 
+                    desc: "Learn about our mission to democratize AI development",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                  },
+                  { 
+                    title: "Blog", 
+                    href: "/blog", 
+                    desc: "Latest news, research updates, and engineering insights",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+                  },
+                  { 
+                    title: "Careers", 
+                    href: "/careers", 
+                    desc: "Join our team and help shape the future of AI",
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  },
                 ]} 
               />
-              <Link href="/docs" className="text-[#a1a1aa] text-sm hover:text-white transition-colors flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                Docs
-              </Link>
+              {!hideDocs && (
+                <Link href="/docs" className="text-[#a1a1aa] text-sm hover:text-white transition-colors flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  Docs
+                </Link>
+              )}
             </nav>
           </div>
           
