@@ -134,14 +134,13 @@ function ModelCard() {
                     671B
                   </span>
                 </div>
-                <p className="text-[#71717a] text-sm mt-0.5">DeepSeek V3.1 • Mixture of Experts</p>
+                <p className="text-[#71717a] text-sm mt-0.5">671 Billion Parameter MoE</p>
               </div>
             </div>
             
-            {/* Status Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-              <span className="text-emerald-400 text-xs font-medium">Live</span>
+            {/* Version Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
+              <span className="text-[#a1a1aa] text-xs font-medium">v1.0</span>
             </div>
           </div>
 
@@ -193,7 +192,7 @@ function ModelCard() {
 
           {/* Footer Badges */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-white/5">
-            {["OpenAI Compatible", "Streaming", "Function Calling", "JSON Mode"].map((badge) => (
+            {["Streaming", "Function Calling", "JSON Mode", "128K Context"].map((badge) => (
               <span key={badge} className="px-3 py-1 bg-white/5 text-[#a1a1aa] text-xs font-medium rounded-full border border-white/5">
                 {badge}
               </span>
@@ -326,7 +325,7 @@ export default function Home() {
             {[
               { 
                 title: "Open Frame Native", 
-                desc: "Purpose-built API for the FORGE model. OpenAI-compatible endpoints for easy migration.",
+                desc: "Purpose-built API for the FORGE model. Standard REST endpoints for easy integration.",
                 icon: (
                   <Image src="/forge-logo.png" alt="FORGE" width={24} height={24} className="rounded" />
                 )
