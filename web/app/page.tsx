@@ -215,9 +215,9 @@ export default function Home() {
           {/* Logo & Nav */}
           <div className="flex items-center">
             <div className="flex items-center gap-3 mr-12">
-              <span className="text-xl font-semibold text-white tracking-tight">Open Frame</span>
-              <span className="text-[#52525b] text-sm font-light">×</span>
               <Image src="/forge-logo.png" alt="FORGE" width={28} height={28} />
+              <span className="text-[#52525b] text-sm font-light">×</span>
+              <span className="text-xl font-semibold text-white tracking-tight">Open Frame</span>
             </div>
             <nav className="hidden md:flex items-center gap-8">
               <Link href="/docs" className="text-[#a1a1aa] text-sm hover:text-white transition-colors">
