@@ -75,8 +75,8 @@ class InferenceClient:
         """Send chat completion request to Fireworks.ai API."""
         start_time = time.time()
         
-        # Use configured model - ignore placeholder "forge-coder" from API requests
-        if not model or model == "forge-coder":
+        # Use configured model - ignore placeholder model names from API requests
+        if not model or model in ("forge-coder", "forge-671b"):
             model = self.model
         
         # Inject FORGE identity if no system prompt provided
@@ -133,8 +133,8 @@ class InferenceClient:
         start_time = time.time()
         chunk_count = 0
         
-        # Use configured model - ignore placeholder "forge-coder" from API requests
-        if not model or model == "forge-coder":
+        # Use configured model - ignore placeholder model names from API requests
+        if not model or model in ("forge-coder", "forge-671b"):
             model = self.model
         
         # Inject FORGE identity if no system prompt provided
