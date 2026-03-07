@@ -58,7 +58,7 @@ export default function Home() {
           {/* Logo & Nav */}
           <div className="flex items-center">
             <div className="text-xl font-semibold text-white tracking-tight mr-12">
-              FORGE
+              Open Frame
             </div>
             <nav className="hidden md:flex items-center gap-8">
               <Link href="/docs" className="text-[#a1a1aa] text-sm hover:text-white transition-colors">
@@ -219,7 +219,7 @@ export default function Home() {
 {`import requests
 
 response = requests.post(
-    "https://api.forge.dev/v1/chat/completions",
+    "https://api.openframe.co/v1/chat/completions",
     headers={"Authorization": "Bearer sk-forge-xxx"},
     json={
         "model": "forge-671b",
@@ -266,9 +266,9 @@ print(response.json()["choices"][0]["message"]["content"])`}
           <div className="flex flex-wrap justify-between gap-12 mb-12">
             {/* Brand */}
             <div>
-              <div className="text-xl font-semibold text-white mb-4 tracking-tight">FORGE</div>
+              <div className="text-xl font-semibold text-white mb-4 tracking-tight">Open Frame</div>
               <p className="text-[#71717a] text-sm max-w-[280px] leading-relaxed">
-                AI coding API built for developers. Fast, reliable, and cost-effective.
+                FORGE AI coding API built for developers. Fast, reliable, and cost-effective.
               </p>
             </div>
             
@@ -293,7 +293,7 @@ print(response.json()["choices"][0]["message"]["content"])`}
           </div>
           
           <div className="border-t border-white/5 pt-8 text-center text-[#52525b] text-sm">
-            © 2024 FORGE. All rights reserved.
+            © 2024 Open Frame. All rights reserved.
           </div>
         </div>
       </footer>

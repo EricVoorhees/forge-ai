@@ -173,7 +173,7 @@ export default function PlaygroundPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">Playground</h1>
-          <p className="text-zinc-500 text-sm mt-1">Test the FORGE API and monitor your traffic</p>
+          <p className="text-zinc-500 text-sm mt-1">Test the FORGE model and monitor your API traffic</p>
         </div>
         
         {/* Quick Stats */}
@@ -226,7 +226,7 @@ export default function PlaygroundPage() {
                   <div className="text-center">
                     <div className="text-4xl mb-4">⚡</div>
                     <div className="text-lg font-medium">Start a conversation</div>
-                    <div className="text-sm mt-1">Send a message to test the FORGE API</div>
+                    <div className="text-sm mt-1">Send a message to test the FORGE model</div>
                   </div>
                 </div>
               ) : (
@@ -437,7 +437,7 @@ export default function PlaygroundPage() {
         <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden">
           <div className="p-4 border-b border-[#1a1a1a]">
             <h3 className="text-sm font-medium text-white">Recent API Calls</h3>
-            <p className="text-xs text-zinc-500 mt-1">Last 20 requests to the FORGE API</p>
+            <p className="text-xs text-zinc-500 mt-1">Last 20 requests to the Open Frame API</p>
           </div>
           
           <div className="overflow-x-auto">

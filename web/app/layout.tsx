@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FORGE - AI Coding API",
-  description: "High-performance coding LLM API powered by Sparse MoE models",
+  title: "Open Frame - FORGE AI Coding API",
+  description: "FORGE-671B: GPT-4 class AI coding API at a fraction of the cost. Built by Open Frame.",
 };
 
 export default function RootLayout({

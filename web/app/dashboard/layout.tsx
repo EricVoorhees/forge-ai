@@ -26,7 +26,7 @@ export default function DashboardLayout({
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="text-xl font-bold text-white tracking-tight">
-              FORGE
+              Open Frame
             </Link>
             <span className="text-[#3f3f46] text-sm">Dashboard</span>
           </div>

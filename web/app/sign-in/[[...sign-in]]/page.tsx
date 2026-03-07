@@ -6,7 +6,7 @@ export default function SignInPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-black px-4" style={{ minHeight: '100dvh' }}>
       {/* Logo */}
       <Link href="/" className="mb-8">
-        <h1 className="text-2xl font-bold text-white tracking-tight">FORGE</h1>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Open Frame</h1>
       </Link>
       
       <SignIn 
