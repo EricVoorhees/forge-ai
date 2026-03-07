@@ -1,10 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const TAGLINES = [
+  "The 671B parameter model built for developers who ship fast.",
+  "Enterprise-grade AI coding at a fraction of the cost.",
+  "Your code, supercharged by 671 billion parameters.",
+  "Build smarter. Ship faster. Scale effortlessly.",
+  "The most powerful coding API you can actually afford.",
+  "From prototype to production in record time.",
+  "671B parameters of pure coding intelligence.",
+  "Where world-class AI meets developer-first pricing.",
+  "Code generation that understands your intent.",
+  "The API that turns ideas into production code.",
+  "Massive model. Minimal latency. Maximum value.",
+  "Professional-grade code completion at scale.",
+  "Your AI pair programmer with 671B parameters.",
+  "Fast inference. Fair pricing. Flawless code.",
+  "The coding API built for teams that move fast.",
+  "Unlock 671B parameters of coding potential.",
+  "AI that writes code like a senior engineer.",
+  "Production-ready code generation, instantly.",
+  "The heavyweight model with lightweight pricing.",
+  "Code smarter with the FORGE 671B model.",
+  "Enterprise AI without the enterprise price tag.",
+  "From idea to implementation in seconds.",
+  "The 671B model that fits your budget.",
+  "Precision code generation at massive scale.",
+  "Your competitive edge in AI-powered development.",
+];
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
+  const [tagline, setTagline] = useState("");
+
+  useEffect(() => {
+    const randomTagline = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
+    setTagline(randomTagline);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -54,9 +88,8 @@ export default function Home() {
             <h1 className="text-[#f7f8fc] leading-[60px] font-semibold text-[32px] md:text-[48px] text-center mt-[100px] mb-3">
               Ask FORGE, Build Faster
             </h1>
-            <p className="text-[#797b89] text-center text-lg mb-8 max-w-[600px]">
-              OpenAI-compatible API powered by DeepSeek V3 671B. 
-              Fast, reliable, and cost-effective code generation.
+            <p className="text-[#797b89] text-center text-lg mb-8 max-w-[600px] min-h-[56px]">
+              {tagline}
             </p>
             
             {/* Chat Input */}
@@ -103,8 +136,8 @@ export default function Home() {
               <div className="text-[#797b89]">Response Time</div>
             </div>
             <div className="text-center">
-              <div className="text-[#615ced] text-4xl font-bold mb-2">100%</div>
-              <div className="text-[#797b89]">OpenAI Compatible</div>
+              <div className="text-[#615ced] text-4xl font-bold mb-2">99.9%</div>
+              <div className="text-[#797b89]">Uptime SLA</div>
             </div>
           </div>
 
@@ -120,12 +153,12 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-[120px]">
             {[
-              { title: "OpenAI Compatible", desc: "Drop-in replacement for OpenAI API. Switch with one line of code." },
+              { title: "Drop-In Compatible", desc: "Works with any client that supports standard chat completions. Switch with one line." },
               { title: "Streaming Support", desc: "Real-time token streaming for responsive user experiences." },
               { title: "Rate Limiting", desc: "Built-in rate limiting with customizable plans and quotas." },
               { title: "Usage Analytics", desc: "Track token usage, costs, and API performance in real-time." },
               { title: "API Key Management", desc: "Create, rotate, and revoke API keys from your dashboard." },
-              { title: "Enterprise Ready", desc: "SOC2 compliant infrastructure with 99.9% uptime SLA." },
+              { title: "Enterprise Ready", desc: "Production-grade infrastructure with 99.9% uptime guarantee." },
             ].map((feature) => (
               <div
                 key={feature.title}
@@ -143,28 +176,27 @@ export default function Home() {
               Simple Integration
             </h2>
             <p className="text-[#797b89]">
-              Get started in minutes with our OpenAI-compatible API
+              Get started in minutes with our developer-friendly API
             </p>
           </div>
 
           <div className="bg-[#1a1a1f] border border-[rgba(95,96,108,0.3)] rounded-2xl p-6 mb-[120px] overflow-x-auto">
             <pre className="text-sm">
               <code className="text-[#f7f8fc]">
-{`import openai
+{`import requests
 
-client = openai.OpenAI(
-    base_url="https://forge-api-a7pi.onrender.com/v1",
-    api_key="sk-forge-xxx"
+response = requests.post(
+    "https://api.forge.dev/v1/chat/completions",
+    headers={"Authorization": "Bearer sk-forge-xxx"},
+    json={
+        "model": "forge-671b",
+        "messages": [
+            {"role": "user", "content": "Write a Python quicksort"}
+        ]
+    }
 )
 
-response = client.chat.completions.create(
-    model="forge-coder",
-    messages=[
-        {"role": "user", "content": "Write a Python quicksort"}
-    ]
-)
-
-print(response.choices[0].message.content)`}
+print(response.json()["choices"][0]["message"]["content"])`}
               </code>
             </pre>
           </div>
