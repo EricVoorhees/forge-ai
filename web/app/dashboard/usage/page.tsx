@@ -1,143 +1,158 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/store";
-import { getDailyUsage, getUsage } from "@/lib/api";
+import { useForgeAuth } from "@/lib/use-forge-auth";
+import { getUsage } from "@/lib/forge-api";
 
-interface DailyData {
-  date: string;
+interface UsageData {
+  period: { start: string; end: string };
   tokens_input: number;
   tokens_output: number;
   total_tokens: number;
-  cost: number;
-  requests: number;
+  total_cost: number;
+  request_count: number;
 }
 
 export default function UsagePage() {
-  const { accessToken } = useAuthStore();
-  const [daily, setDaily] = useState<DailyData[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+  const { forgeToken, isLoading: authLoading } = useForgeAuth();
+  const [summary, setSummary] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (accessToken) {
-      Promise.all([getDailyUsage(accessToken, 30), getUsage(accessToken)])
-        .then(([dailyData, summaryData]) => {
-          setDaily(dailyData.data);
-          setSummary(summaryData);
-        })
+    if (forgeToken) {
+      getUsage(forgeToken)
+        .then(setSummary)
+        .catch(console.error)
         .finally(() => setLoading(false));
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [accessToken]);
+  }, [forgeToken, authLoading]);
 
-  if (loading) {
-    return <div className="text-gray-400">Loading...</div>;
+  if (authLoading || loading) {
+    return <div className="text-[#71717a]">Loading...</div>;
   }
-
-  const maxTokens = Math.max(...daily.map((d) => d.total_tokens), 1);
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-white">Usage</h1>
+      <h1 className="text-2xl font-bold text-white tracking-tight">Usage</h1>
 
-      {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gray-800 rounded-lg p-6">
-          <div className="text-gray-400 text-sm">Input Tokens</div>
-          <div className="text-2xl font-bold text-white mt-2">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
+          <div className="text-[#71717a] text-sm">Input Tokens</div>
+          <div className="text-2xl font-semibold text-white mt-2">
             {summary?.tokens_input?.toLocaleString() || 0}
           </div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-6">
-          <div className="text-gray-400 text-sm">Output Tokens</div>
-          <div className="text-2xl font-bold text-white mt-2">
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
+          <div className="text-[#71717a] text-sm">Output Tokens</div>
+          <div className="text-2xl font-semibold text-white mt-2">
             {summary?.tokens_output?.toLocaleString() || 0}
           </div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-6">
-          <div className="text-gray-400 text-sm">Total Requests</div>
-          <div className="text-2xl font-bold text-white mt-2">
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
+          <div className="text-[#71717a] text-sm">Total Requests</div>
+          <div className="text-2xl font-semibold text-white mt-2">
             {summary?.request_count?.toLocaleString() || 0}
           </div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-6">
-          <div className="text-gray-400 text-sm">Total Cost</div>
-          <div className="text-2xl font-bold text-white mt-2">
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
+          <div className="text-[#71717a] text-sm">Total Cost</div>
+          <div className="text-2xl font-semibold text-white mt-2">
             ${summary?.total_cost?.toFixed(2) || "0.00"}
           </div>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-white mb-6">
-          Daily Token Usage (Last 30 Days)
+      {/* Usage Period */}
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">
+          Current Period
         </h2>
-        <div className="h-64 flex items-end gap-1">
-          {daily.map((day, i) => (
-            <div
-              key={day.date}
-              className="flex-1 bg-blue-500 rounded-t hover:bg-blue-400 transition-colors"
-              style={{
-                height: `${(day.total_tokens / maxTokens) * 100}%`,
-                minHeight: day.total_tokens > 0 ? "4px" : "0",
-              }}
-              title={`${day.date}: ${day.total_tokens.toLocaleString()} tokens`}
-            />
-          ))}
-        </div>
-        <div className="flex justify-between mt-2 text-xs text-gray-500">
-          <span>{daily[0]?.date || ""}</span>
-          <span>{daily[daily.length - 1]?.date || ""}</span>
+        <div className="flex items-center gap-4 text-[#a1a1aa]">
+          <div>
+            <span className="text-[#71717a] text-sm">From:</span>{" "}
+            <span className="text-white">
+              {summary?.period?.start ? new Date(summary.period.start).toLocaleDateString() : "—"}
+            </span>
+          </div>
+          <div className="text-[#3f3f46]">→</div>
+          <div>
+            <span className="text-[#71717a] text-sm">To:</span>{" "}
+            <span className="text-white">
+              {summary?.period?.end ? new Date(summary.period.end).toLocaleDateString() : "—"}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-gray-800 rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300">
-                Date
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-300">
-                Input Tokens
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-300">
-                Output Tokens
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-300">
-                Requests
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-300">
-                Cost
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {daily
-              .slice()
-              .reverse()
-              .map((day) => (
-                <tr key={day.date}>
-                  <td className="px-6 py-4 text-white">{day.date}</td>
-                  <td className="px-6 py-4 text-gray-400 text-right">
-                    {day.tokens_input.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-right">
-                    {day.tokens_output.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-right">
-                    {day.requests.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 text-gray-400 text-right">
-                    ${day.cost.toFixed(4)}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+      {/* Token Breakdown */}
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-white mb-6">
+          Token Breakdown
+        </h2>
+        <div className="space-y-4">
+          {/* Input tokens bar */}
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-[#a1a1aa]">Input Tokens</span>
+              <span className="text-white font-medium">
+                {summary?.tokens_input?.toLocaleString() || 0}
+              </span>
+            </div>
+            <div className="h-2 bg-[#18181b] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full"
+                style={{
+                  width: `${summary?.total_tokens ? (summary.tokens_input / summary.total_tokens) * 100 : 0}%`,
+                }}
+              />
+            </div>
+          </div>
+          
+          {/* Output tokens bar */}
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-[#a1a1aa]">Output Tokens</span>
+              <span className="text-white font-medium">
+                {summary?.tokens_output?.toLocaleString() || 0}
+              </span>
+            </div>
+            <div className="h-2 bg-[#18181b] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#71717a] rounded-full"
+                style={{
+                  width: `${summary?.total_tokens ? (summary.tokens_output / summary.total_tokens) * 100 : 0}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Total */}
+        <div className="mt-6 pt-4 border-t border-[#1a1a1a] flex justify-between">
+          <span className="text-[#a1a1aa]">Total Tokens</span>
+          <span className="text-white font-semibold">
+            {summary?.total_tokens?.toLocaleString() || 0}
+          </span>
+        </div>
       </div>
+
+      {/* Empty state if no usage */}
+      {(!summary || summary.total_tokens === 0) && (
+        <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-12 text-center">
+          <div className="text-[#3f3f46] mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <h3 className="text-white font-medium mb-2">No usage yet</h3>
+          <p className="text-[#71717a] text-sm">
+            Start making API requests to see your usage statistics here.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

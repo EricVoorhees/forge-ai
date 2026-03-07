@@ -19,19 +19,59 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen" style={{ backgroundColor: '#000000' }}>
       {/* Header */}
-      <header className="border-b border-zinc-800">
+      <header className="border-b border-[#1a1a1a]" style={{ backgroundColor: '#000000' }}>
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-white">
-            FORGE
-          </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="text-xl font-bold text-white tracking-tight">
+              FORGE
+            </Link>
+            <span className="text-[#3f3f46] text-sm">Dashboard</span>
+          </div>
+          
+          {/* Quick Actions */}
+          <div className="flex items-center gap-3">
+            {/* Create API Key Button */}
+            <Link
+              href="/dashboard/api-keys"
+              className="flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-full hover:bg-zinc-200 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Key
+            </Link>
+            
+            {/* Playground Button */}
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 px-4 py-2 border border-[#27272a] text-white text-sm font-medium rounded-full hover:bg-[#18181b] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Playground
+            </Link>
+            
+            {/* Docs Button (Round) */}
+            <Link
+              href="/docs"
+              className="flex items-center justify-center w-10 h-10 border border-[#27272a] text-zinc-400 rounded-full hover:bg-[#18181b] hover:text-white transition-colors"
+              title="Documentation"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </Link>
+            
+            {/* User Button */}
             <UserButton 
               afterSignOutUrl="/"
               appearance={{
                 elements: {
-                  avatarBox: "w-8 h-8",
+                  avatarBox: "w-10 h-10 border border-[#27272a]",
                 },
               }}
             />
@@ -41,16 +81,16 @@ export default function DashboardLayout({
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-zinc-800 min-h-[calc(100vh-65px)]">
+        <aside className="w-64 border-r border-[#1a1a1a] min-h-[calc(100vh-65px)]" style={{ backgroundColor: '#000000' }}>
           <nav className="p-4 space-y-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block px-4 py-2 rounded-lg ${
+                className={`block px-4 py-2.5 rounded-lg text-sm transition-colors ${
                   pathname === item.href
-                    ? "bg-zinc-800 text-white"
-                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                    ? "bg-[#18181b] text-white font-medium"
+                    : "text-[#71717a] hover:text-white hover:bg-[#18181b]/50"
                 }`}
               >
                 {item.label}
@@ -60,7 +100,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8">{children}</main>
+        <main className="flex-1 p-8" style={{ backgroundColor: '#000000' }}>{children}</main>
       </div>
     </div>
   );

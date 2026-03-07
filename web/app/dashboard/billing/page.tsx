@@ -80,18 +80,18 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-white">Billing</h1>
+      <h1 className="text-2xl font-bold text-white tracking-tight">Billing</h1>
 
       {/* Current Plan */}
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-gray-400 text-sm">Current Plan</div>
-            <div className="text-2xl font-bold text-white mt-1 capitalize">
+            <div className="text-[#71717a] text-sm">Current Plan</div>
+            <div className="text-2xl font-semibold text-white mt-1 capitalize">
               {currentPlan}
             </div>
             {subscription?.current_period_end && (
-              <div className="text-gray-400 text-sm mt-1">
+              <div className="text-[#71717a] text-sm mt-1">
                 Renews on{" "}
                 {new Date(subscription.current_period_end).toLocaleDateString()}
               </div>
@@ -100,7 +100,7 @@ export default function BillingPage() {
           {currentPlan !== "free" && (
             <button
               onClick={handleManage}
-              className="px-4 py-2 border border-gray-600 rounded text-white hover:bg-gray-700"
+              className="px-4 py-2 border border-[#27272a] rounded-lg text-white hover:bg-[#18181b] transition-colors"
             >
               Manage Subscription
             </button>
@@ -109,24 +109,24 @@ export default function BillingPage() {
       </div>
 
       {/* Plans */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`bg-gray-800 rounded-lg p-6 ${
-              currentPlan === plan.id ? "ring-2 ring-blue-500" : ""
+            className={`bg-[#0a0a0a] border rounded-xl p-6 ${
+              currentPlan === plan.id ? "border-white" : "border-[#1a1a1a]"
             }`}
           >
             <div className="text-lg font-semibold text-white">{plan.name}</div>
-            <div className="text-3xl font-bold text-white mt-2">
+            <div className="text-3xl font-semibold text-white mt-2">
               {plan.price}
-              <span className="text-sm text-gray-400 font-normal">/month</span>
+              <span className="text-sm text-[#71717a] font-normal">/month</span>
             </div>
             <ul className="mt-6 space-y-3">
               {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center text-gray-300">
+                <li key={feature} className="flex items-center text-[#a1a1aa] text-sm">
                   <svg
-                    className="w-5 h-5 text-green-400 mr-2"
+                    className="w-4 h-4 text-white mr-2 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -146,14 +146,14 @@ export default function BillingPage() {
               {currentPlan === plan.id ? (
                 <button
                   disabled
-                  className="w-full py-2 bg-gray-700 text-gray-400 rounded cursor-not-allowed"
+                  className="w-full py-2.5 bg-[#18181b] text-[#71717a] rounded-lg cursor-not-allowed text-sm font-medium"
                 >
                   Current Plan
                 </button>
               ) : plan.id === "free" ? (
                 <button
                   disabled
-                  className="w-full py-2 bg-gray-700 text-gray-400 rounded cursor-not-allowed"
+                  className="w-full py-2.5 bg-[#18181b] text-[#71717a] rounded-lg cursor-not-allowed text-sm font-medium"
                 >
                   Free Tier
                 </button>
@@ -161,7 +161,7 @@ export default function BillingPage() {
                 <button
                   onClick={() => handleUpgrade(plan.id)}
                   disabled={upgrading === plan.id}
-                  className="w-full py-2 bg-white text-black rounded font-semibold hover:bg-gray-200 disabled:opacity-50"
+                  className="w-full py-2.5 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 disabled:opacity-50 transition-colors text-sm"
                 >
                   {upgrading === plan.id ? "Redirecting..." : "Upgrade"}
                 </button>

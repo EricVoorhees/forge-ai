@@ -67,12 +67,10 @@ export default function ApiKeysPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">API Keys</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-white tracking-tight">API Keys</h1>
 
       {/* Create New Key */}
-      <div className="bg-gray-800 rounded-lg p-6">
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-6">
         <h2 className="text-lg font-semibold text-white mb-4">Create New Key</h2>
         <div className="flex gap-4">
           <input
@@ -80,12 +78,12 @@ export default function ApiKeysPage() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder="Key name (e.g., Production)"
-            className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
+            className="flex-1 px-4 py-3 bg-[#000000] border border-[#27272a] rounded-lg text-white placeholder:text-[#52525b] focus:outline-none focus:border-[#3f3f46] transition-colors"
           />
           <button
             onClick={handleCreate}
             disabled={creating || !newKeyName.trim()}
-            className="px-6 py-2 bg-white text-black rounded font-semibold hover:bg-gray-200 disabled:opacity-50"
+            className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-zinc-200 disabled:opacity-50 transition-colors"
           >
             {creating ? "Creating..." : "Create Key"}
           </button>
@@ -94,81 +92,81 @@ export default function ApiKeysPage() {
 
       {/* New Key Display */}
       {showNewKey && (
-        <div className="bg-green-500/20 border border-green-500 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-green-400 mb-2">
+        <div className="bg-[#0a0a0a] border border-[#22c55e]/30 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-[#22c55e] mb-2">
             API Key Created
           </h3>
-          <p className="text-gray-300 mb-4">
+          <p className="text-[#a1a1aa] mb-4">
             Copy this key now. You won&apos;t be able to see it again.
           </p>
           <div className="flex gap-2">
-            <code className="flex-1 px-4 py-2 bg-gray-900 rounded text-green-400 font-mono text-sm">
+            <code className="flex-1 px-4 py-3 bg-[#000000] border border-[#1a1a1a] rounded-lg text-[#22c55e] font-mono text-sm">
               {showNewKey}
             </code>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(showNewKey);
               }}
-              className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
+              className="px-4 py-3 bg-[#18181b] text-white rounded-lg hover:bg-[#27272a] transition-colors"
             >
               Copy
             </button>
           </div>
           <button
             onClick={() => setShowNewKey(null)}
-            className="mt-4 text-gray-400 hover:text-white"
+            className="mt-4 text-[#71717a] hover:text-white text-sm transition-colors"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Keys Table */}
-      <div className="bg-gray-800 rounded-lg overflow-hidden">
+      {/* Keys List */}
+      <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-700">
+          <thead className="border-b border-[#1a1a1a]">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300">
+              <th className="px-6 py-4 text-left text-sm font-medium text-[#71717a]">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300">
+              <th className="px-6 py-4 text-left text-sm font-medium text-[#71717a]">
                 Key
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300">
+              <th className="px-6 py-4 text-left text-sm font-medium text-[#71717a]">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300">
+              <th className="px-6 py-4 text-left text-sm font-medium text-[#71717a]">
                 Last Used
               </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300">
+              <th className="px-6 py-4 text-left text-sm font-medium text-[#71717a]">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-sm font-medium text-gray-300">
+              <th className="px-6 py-4 text-right text-sm font-medium text-[#71717a]">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-[#1a1a1a]">
             {keys.map((key) => (
-              <tr key={key.id}>
-                <td className="px-6 py-4 text-white">{key.name}</td>
-                <td className="px-6 py-4 text-gray-400 font-mono">
+              <tr key={key.id} className="hover:bg-[#0f0f0f] transition-colors">
+                <td className="px-6 py-4 text-white font-medium">{key.name}</td>
+                <td className="px-6 py-4 text-[#71717a] font-mono text-sm">
                   {key.prefix}...
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-4 text-[#a1a1aa]">
                   {new Date(key.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-4 text-[#a1a1aa]">
                   {key.last_used_at
                     ? new Date(key.last_used_at).toLocaleDateString()
                     : "Never"}
                 </td>
                 <td className="px-6 py-4">
                   <span
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium ${
                       key.is_active
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-red-500/20 text-red-400"
+                        ? "bg-[#22c55e]/10 text-[#22c55e]"
+                        : "bg-[#ef4444]/10 text-[#ef4444]"
                     }`}
                   >
                     {key.is_active ? "Active" : "Revoked"}
@@ -178,7 +176,7 @@ export default function ApiKeysPage() {
                   {key.is_active && (
                     <button
                       onClick={() => handleRevoke(key.id)}
-                      className="text-red-400 hover:text-red-300"
+                      className="text-[#ef4444] hover:text-[#f87171] text-sm font-medium transition-colors"
                     >
                       Revoke
                     </button>
@@ -188,8 +186,13 @@ export default function ApiKeysPage() {
             ))}
             {keys.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
-                  No API keys yet. Create one to get started.
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <div className="text-[#3f3f46] mb-3">
+                    <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                  </div>
+                  <p className="text-[#71717a]">No API keys yet. Create one to get started.</p>
                 </td>
               </tr>
             )}
