@@ -1,35 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-
-const TAGLINES = [
-  "FORGE runs on 671 billion parameters — more than GPT-4's rumored 1.7T mixture, distilled into pure coding focus.",
-  "Our model processes 128K context windows. FORGE remembers your entire codebase, not just the last function.",
-  "FORGE inference runs on 8x H100 clusters with NVLink. That's 640GB of HBM3 memory serving your requests.",
-  "Trained on 14.8 trillion tokens of curated code. FORGE has seen more repositories than any human ever will.",
-  "FORGE uses Mixture-of-Experts architecture — only 37B parameters activate per request, keeping latency under 3 seconds.",
-  "FP8 quantization meets tensor parallelism. FORGE delivers full model quality at 4x the throughput.",
-  "FORGE's KV-cache optimization handles 32K token generations without degradation. Write entire modules, not snippets.",
-  "Multi-head latent attention with 128 heads. FORGE captures code relationships humans miss.",
-  "Speculative decoding gives FORGE 2.3x faster token generation than standard autoregressive inference.",
-  "FORGE runs on custom CUDA kernels optimized for code completion. Every millisecond counts.",
-  "Our inference stack uses continuous batching — your request never waits in a queue behind a 100K prompt.",
-  "FORGE's rotary position embeddings scale to 128K context. Refactor entire services in a single call.",
-  "Trained with RLHF on 2M human preference pairs from senior engineers. FORGE writes code you'd actually ship.",
-  "FORGE uses grouped-query attention — 8x more memory efficient than standard transformers.",
-  "FlashAttention-2 powers every FORGE request. O(N) memory complexity, not O(N²).",
-  "FORGE's tokenizer was trained on 50M code files. It understands syntax, not just characters.",
-  "Our model uses SwiGLU activations — 15% better performance than ReLU on code benchmarks.",
-  "FORGE achieves 92.1% pass@1 on HumanEval. That's senior engineer territory.",
-  "PagedAttention lets FORGE serve 10x more concurrent users without memory fragmentation.",
-  "FORGE's embedding dimension is 7168 — capturing nuances in code that smaller models miss.",
-  "Trained with code-specific loss functions. FORGE optimizes for compilable output, not just token probability.",
-  "FORGE uses learned positional encodings that generalize beyond training context. Future-proof architecture.",
-  "Our inference servers run on PCIe Gen5 with 128GB/s bandwidth. Data moves at the speed of thought.",
-  "FORGE's attention mechanism uses ALiBi scaling — consistent quality from 1K to 128K tokens.",
-  "256 transformer layers deep. FORGE reasons through complex code logic step by step.",
-];
+import { useState } from "react";
 
 const FEATURE_TAGS = [
   { label: "Code Generation", icon: (
@@ -76,12 +48,6 @@ const FEATURE_TAGS = [
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
-  const [tagline, setTagline] = useState("");
-
-  useEffect(() => {
-    const randomTagline = TAGLINES[Math.floor(Math.random() * TAGLINES.length)];
-    setTagline(randomTagline);
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
@@ -131,8 +97,8 @@ export default function Home() {
             <h1 className="text-white leading-tight font-semibold text-[36px] md:text-[56px] text-center mt-24 mb-4 tracking-tight">
               Ask FORGE, Build Faster
             </h1>
-            <p className="text-[#71717a] text-center text-lg mb-10 max-w-[600px] min-h-[56px]">
-              {tagline}
+            <p className="text-[#71717a] text-center text-lg mb-10 max-w-[600px]">
+              FORGE-671B is built on state-of-the-art open-source foundation models, delivering GPT-4 class performance at a fraction of the cost.
             </p>
             
             {/* Chat Input */}
