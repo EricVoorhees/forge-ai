@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 
@@ -25,8 +26,9 @@ export default function DashboardLayout({
       <header className="border-b border-[#1a1a1a] bg-[#0a0a0a]">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-xl font-bold text-white tracking-tight">
-              Open Frame
+            <Link href="/" className="flex items-center gap-2">
+              <Image src="/forge-logo.png" alt="Open Frame" width={24} height={24} />
+              <span className="text-xl font-bold text-white tracking-tight">Open Frame</span>
             </Link>
             <span className="text-[#3f3f46] text-sm">Dashboard</span>
           </div>

@@ -1,12 +1,14 @@
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function SignUpPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-black px-4" style={{ minHeight: '100dvh' }}>
       {/* Logo */}
-      <Link href="/" className="mb-8">
-        <h1 className="text-2xl font-bold text-white tracking-tight">Open Frame</h1>
+      <Link href="/" className="flex items-center gap-2 mb-8">
+        <Image src="/forge-logo.png" alt="Open Frame" width={28} height={28} />
+        <span className="text-2xl font-bold text-white tracking-tight">Open Frame</span>
       </Link>
       
       <SignUp 

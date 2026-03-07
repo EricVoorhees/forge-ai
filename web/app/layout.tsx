@@ -6,8 +6,56 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Open Frame - FORGE AI Coding API",
-  description: "FORGE-671B: GPT-4 class AI coding API at a fraction of the cost. Built by Open Frame.",
+  title: {
+    default: "Open Frame - FORGE AI API",
+    template: "%s | Open Frame",
+  },
+  description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis. Access via API at $1.00/1M input tokens.",
+  keywords: ["AI API", "FORGE", "Open Frame", "code generation", "LLM", "AI coding", "machine learning API", "671B model"],
+  authors: [{ name: "Open Frame" }],
+  creator: "Open Frame",
+  publisher: "Open Frame",
+  metadataBase: new URL("https://openframe.co"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://openframe.co",
+    siteName: "Open Frame",
+    title: "Open Frame - FORGE AI API",
+    description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis. Access via API at $1.00/1M input tokens.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Open Frame - FORGE AI API",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Open Frame - FORGE AI API",
+    description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis.",
+    images: ["/og-image.png"],
+    creator: "@openframe",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({

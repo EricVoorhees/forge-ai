@@ -1,0 +1,13 @@
+# Open Frame - FORGE AI API
+# https://openframe.co
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://openframe.co/sitemap.xml
+
+# Disallow admin/auth pages from indexing
+Disallow: /dashboard/
+Disallow: /sign-in/
+Disallow: /sign-up/
