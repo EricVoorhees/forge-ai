@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useForgeAuth } from "@/lib/use-forge-auth";
 import { 
-  getApiKeys, 
   getRecentCalls, 
   getDailyUsage, 
   getUsage,
@@ -41,8 +40,8 @@ export default function PlaygroundPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedApiKey, setSelectedApiKey] = useState<string>("");
-  const [apiKeys, setApiKeys] = useState<{ id: string; name: string; prefix: string; key?: string }[]>([]);
+  const [apiKey, setApiKey] = useState<string>("");
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   
   // Stats state
   const [recentCalls, setRecentCalls] = useState<ApiCall[]>([]);
@@ -57,30 +56,41 @@ export default function PlaygroundPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"chat" | "traffic" | "stats">("chat");
 
+  // Load saved API key from localStorage
+  useEffect(() => {
+    const savedKey = localStorage.getItem("forge_playground_api_key");
+    if (savedKey) {
+      setApiKey(savedKey);
+    }
+  }, []);
+
+  // Save API key to localStorage when changed
+  const handleApiKeyChange = (key: string) => {
+    setApiKey(key);
+    if (key) {
+      localStorage.setItem("forge_playground_api_key", key);
+    } else {
+      localStorage.removeItem("forge_playground_api_key");
+    }
+  };
+
   // Load data
   useEffect(() => {
     if (!forgeToken) return;
 
     const loadData = async () => {
       try {
-        const [keysData, callsData, dailyData, usageData, limitsData] = await Promise.all([
-          getApiKeys(forgeToken),
+        const [callsData, dailyData, usageData, limitsData] = await Promise.all([
           getRecentCalls(forgeToken, 20),
           getDailyUsage(forgeToken, 14),
           getUsage(forgeToken),
           getRateLimits(forgeToken),
         ]);
         
-        setApiKeys(keysData);
         setRecentCalls(callsData.calls);
         setDailyUsage(dailyData.data);
         setUsage(usageData);
         setRateLimits(limitsData);
-        
-        // Auto-select first API key
-        if (keysData.length > 0 && !selectedApiKey) {
-          setSelectedApiKey(keysData[0].prefix);
-        }
       } catch (error) {
         console.error("Failed to load data:", error);
       }
@@ -95,7 +105,7 @@ export default function PlaygroundPage() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || !selectedApiKey || isGenerating) return;
+    if (!input.trim() || !apiKey || isGenerating) return;
 
     const userMessage: Message = { role: "user", content: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
@@ -103,10 +113,8 @@ export default function PlaygroundPage() {
     setIsGenerating(true);
 
     try {
-      // Find the full API key (we need to get it from the keys endpoint with the actual key)
-      // For now, use the prefix - in production you'd store the full key securely
       const response = await chatCompletion(
-        `sk-forge-${selectedApiKey}`, // This won't work - need actual key
+        apiKey,
         [...messages, userMessage],
         { temperature, max_tokens: maxTokens }
       );
@@ -266,15 +274,15 @@ export default function PlaygroundPage() {
                 />
                 <button
                   onClick={handleSend}
-                  disabled={!input.trim() || isGenerating || !selectedApiKey}
+                  disabled={!input.trim() || isGenerating || !apiKey}
                   className="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Send
                 </button>
               </div>
-              {!selectedApiKey && apiKeys.length === 0 && (
+              {!apiKey && (
                 <p className="text-xs text-amber-500 mt-2">
-                  Create an API key first to use the playground
+                  Enter your API key in the settings panel to use the playground
                 </p>
               )}
             </div>
@@ -282,21 +290,57 @@ export default function PlaygroundPage() {
 
           {/* Settings Panel */}
           <div className="space-y-4">
-            {/* API Key Selection */}
+            {/* API Key Input */}
             <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl p-4">
-              <h3 className="text-sm font-medium text-white mb-3">API Key</h3>
-              <select
-                value={selectedApiKey}
-                onChange={(e) => setSelectedApiKey(e.target.value)}
-                className="w-full bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-zinc-500"
-              >
-                <option value="">Select an API key</option>
-                {apiKeys.map((key) => (
-                  <option key={key.id} value={key.prefix}>
-                    {key.name} ({key.prefix}...)
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-white">API Key</h3>
+                {apiKey && (
+                  <span className="text-xs text-green-500">● Connected</span>
+                )}
+              </div>
+              
+              {showApiKeyInput || !apiKey ? (
+                <div className="space-y-2">
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => handleApiKeyChange(e.target.value)}
+                    placeholder="sk-forge-..."
+                    className="w-full bg-[#18181b] border border-[#27272a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-zinc-500 font-mono"
+                  />
+                  <p className="text-xs text-zinc-500">
+                    Paste your full API key. It will be stored locally in your browser.
+                  </p>
+                  {apiKey && (
+                    <button
+                      onClick={() => setShowApiKeyInput(false)}
+                      className="text-xs text-zinc-400 hover:text-white"
+                    >
+                      Hide
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <code className="text-sm text-zinc-400 font-mono">
+                    {apiKey.slice(0, 12)}...{apiKey.slice(-4)}
+                  </code>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowApiKeyInput(true)}
+                      className="text-xs text-zinc-400 hover:text-white"
+                    >
+                      Change
+                    </button>
+                    <button
+                      onClick={() => handleApiKeyChange("")}
+                      className="text-xs text-red-400 hover:text-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Model Settings */}

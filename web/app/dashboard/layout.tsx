@@ -20,9 +20,9 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#000000' }}>
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
-      <header className="border-b border-[#1a1a1a]" style={{ backgroundColor: '#000000' }}>
+      <header className="border-b border-[#1a1a1a] bg-[#0a0a0a]">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="text-xl font-bold text-white tracking-tight">
@@ -82,7 +82,7 @@ export default function DashboardLayout({
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-[#1a1a1a] min-h-[calc(100vh-65px)]" style={{ backgroundColor: '#000000' }}>
+        <aside className="w-64 border-r border-[#1a1a1a] min-h-[calc(100vh-65px)] bg-[#0a0a0a]">
           <nav className="p-4 space-y-1">
             {navItems.map((item) => (
               <Link
@@ -101,7 +101,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8" style={{ backgroundColor: '#000000' }}>{children}</main>
+        <main className="flex-1 p-8 bg-[#0a0a0a]">{children}</main>
       </div>
     </div>
   );
