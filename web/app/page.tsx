@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const FEATURE_TAGS = [
   { label: "Code Generation", icon: (
@@ -73,18 +74,36 @@ export default function Home() {
           </div>
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/sign-in"
-              className="hidden md:flex text-[#a1a1aa] text-sm hover:text-white transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:bg-white/90 transition-colors"
-            >
-              Get Started
-            </Link>
+            <SignedOut>
+              <Link
+                href="/sign-in"
+                className="hidden md:flex text-[#a1a1aa] text-sm hover:text-white transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="bg-white text-black text-sm font-medium px-4 py-2 rounded-full hover:bg-white/90 transition-colors"
+              >
+                Get Started
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link
+                href="/dashboard"
+                className="text-[#a1a1aa] text-sm hover:text-white transition-colors mr-2"
+              >
+                Dashboard
+              </Link>
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8"
+                  }
+                }}
+              />
+            </SignedIn>
           </div>
         </div>
       </header>
