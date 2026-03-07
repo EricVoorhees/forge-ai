@@ -2,8 +2,50 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+
+// Animated counter hook
+function useCountUp(end: number, duration: number = 1500, decimals: number = 0, prefix: string = "", suffix: string = "") {
+  const [count, setCount] = useState(0);
+  const countRef = useRef<HTMLSpanElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const startTime = performance.now();
+          const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Easing function for smooth deceleration
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            setCount(easeOut * end);
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (countRef.current) {
+      observer.observe(countRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [end, duration, hasAnimated]);
+
+  const displayValue = decimals > 0 
+    ? count.toFixed(decimals) 
+    : Math.round(count).toString();
+
+  return { countRef, displayValue: `${prefix}${displayValue}${suffix}` };
+}
 
 const FEATURE_TAGS = [
   { label: "Code Generation", icon: (
@@ -47,6 +89,121 @@ const FEATURE_TAGS = [
     </svg>
   )},
 ];
+
+// Animated Stat Component
+function AnimatedStat({ value, decimals = 0, prefix = "", suffix = "", label, sublabel }: {
+  value: number;
+  decimals?: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+  sublabel?: string;
+}) {
+  const { countRef, displayValue } = useCountUp(value, 1200, decimals, prefix, suffix);
+  return (
+    <div className="text-center">
+      <span ref={countRef} className="text-white text-3xl md:text-4xl font-semibold tracking-tight tabular-nums">
+        {displayValue}
+      </span>
+      <div className="text-[#a1a1aa] text-sm font-medium mt-1">{label}</div>
+      {sublabel && <div className="text-[#52525b] text-xs mt-0.5">{sublabel}</div>}
+    </div>
+  );
+}
+
+// Professional Model Card Component
+function ModelCard() {
+  return (
+    <div className="w-full max-w-[900px] mx-auto mb-32">
+      <div className="relative bg-gradient-to-br from-[#18181b] via-[#1c1c1f] to-[#18181b] border border-white/10 rounded-3xl overflow-hidden">
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+        
+        {/* Card Content */}
+        <div className="relative p-8 md:p-10">
+          {/* Header Row */}
+          <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center border border-orange-500/20">
+                <Image src="/forge-logo.png" alt="FORGE" width={28} height={28} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-white text-xl font-semibold tracking-tight">FORGE 1</h3>
+                  <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 text-xs font-medium rounded-full border border-orange-500/20">
+                    671B
+                  </span>
+                </div>
+                <p className="text-[#71717a] text-sm mt-0.5">DeepSeek V3.1 • Mixture of Experts</p>
+              </div>
+            </div>
+            
+            {/* Status Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="text-emerald-400 text-xs font-medium">Live</span>
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
+            <AnimatedStat value={671} suffix="B" label="Parameters" sublabel="Sparse MoE" />
+            <AnimatedStat value={128} suffix="K" label="Context Window" sublabel="tokens" />
+            <AnimatedStat value={99.9} decimals={1} suffix="%" label="Uptime SLA" sublabel="guaranteed" />
+            <AnimatedStat value={150} suffix="+" label="tok/sec" sublabel="throughput" />
+          </div>
+
+          {/* Pricing Section */}
+          <div className="bg-[#0a0a0a]/50 rounded-2xl p-6 border border-white/5">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-4 h-4 text-[#71717a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-[#71717a] text-sm font-medium">Pricing per 1M tokens</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#18181b] rounded-xl p-4 border border-white/5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-white text-2xl font-semibold">$1.00</span>
+                </div>
+                <div className="text-[#71717a] text-sm mt-1">Input tokens</div>
+                <div className="flex items-center gap-1 mt-2">
+                  <svg className="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-[#52525b] text-xs">Prompts & context</span>
+                </div>
+              </div>
+              
+              <div className="bg-[#18181b] rounded-xl p-4 border border-white/5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-white text-2xl font-semibold">$1.50</span>
+                </div>
+                <div className="text-[#71717a] text-sm mt-1">Output tokens</div>
+                <div className="flex items-center gap-1 mt-2">
+                  <svg className="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-[#52525b] text-xs">Completions & responses</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6 pt-6 border-t border-white/5">
+            {["OpenAI Compatible", "Streaming", "Function Calling", "JSON Mode"].map((badge) => (
+              <span key={badge} className="px-3 py-1 bg-white/5 text-[#a1a1aa] text-xs font-medium rounded-full border border-white/5">
+                {badge}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -152,29 +309,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stats Section - Glassmorphic Card */}
-          <div className="w-full max-w-[900px] mx-auto mb-32">
-            <div className="bg-gradient-to-b from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div className="text-center">
-                  <div className="text-white text-4xl md:text-5xl font-semibold mb-2 tracking-tight">671B</div>
-                  <div className="text-[#71717a] text-sm">Parameters</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-white text-4xl md:text-5xl font-semibold mb-2 tracking-tight">$0.90</div>
-                  <div className="text-[#71717a] text-sm">Per 1M Tokens</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-white text-4xl md:text-5xl font-semibold mb-2 tracking-tight">&lt;3s</div>
-                  <div className="text-[#71717a] text-sm">Response Time</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-white text-4xl md:text-5xl font-semibold mb-2 tracking-tight">99.9%</div>
-                  <div className="text-[#71717a] text-sm">Uptime</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Model Card */}
+          <ModelCard />
 
           {/* Features Section */}
           <div className="text-center w-full flex flex-col items-center mb-12">
