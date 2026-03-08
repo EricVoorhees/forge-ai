@@ -204,7 +204,7 @@ export default function BillingPage() {
             <h3 className="text-white font-semibold">Need more tokens?</h3>
             <p className="text-[#71717a] text-sm mt-1">
               For high-volume usage, contact us about our metered API plan with pay-as-you-go pricing 
-              at $1.00/1M input tokens and $1.50/1M output tokens.
+              at $1.00/1M input tokens and $2.00/1M output tokens.
             </p>
             <a href="mailto:support@openframe.co" className="text-orange-400 text-sm mt-2 inline-block hover:underline">
               Contact Sales →

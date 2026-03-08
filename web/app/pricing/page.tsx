@@ -69,7 +69,7 @@ const PLANS = [
 
 const API_PRICING = {
   input: 1.00,
-  output: 1.50,
+  output: 2.00,
   description: "Pay only for what you use with our metered API plan",
 };
 
