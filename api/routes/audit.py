@@ -1248,20 +1248,33 @@ async def scan_github_repo(
             db.add(scan)
             await db.flush()
             
-            # Save findings
+            # Save findings with enhanced data
             for f in all_findings[:100]:  # Limit stored findings
                 db_finding = AuditFinding(
                     scan_id=scan.id,
                     finding_type=f.finding_type,
                     severity=f.severity,
                     confidence=f.confidence,
+                    rule_id=f.rule_id,
                     file_path=f.file_path,
                     line_number=f.line_number,
                     column_number=f.column_number,
                     code_snippet=f.code_snippet[:2000] if f.code_snippet else None,
+                    matched_text=f.matched_text[:500] if f.matched_text else None,
                     description=f.description,
                     cwe_id=f.cwe_id,
-                    owasp_category=f.owasp_category
+                    owasp_category=f.owasp_category,
+                    # Fingerprinting
+                    match_based_id=f.match_based_id,
+                    syntactic_id=f.syntactic_id,
+                    # Autofix
+                    autofix_available=f.autofix_available,
+                    autofix_code=f.autofix_code,
+                    suggested_fix=json.dumps(f.suggested_fix) if f.suggested_fix else None,
+                    # Component tags
+                    component_tags=json.dumps(f.component_tags) if f.component_tags else None,
+                    # Triage defaults
+                    triage_status="open",
                 )
                 db.add(db_finding)
             
@@ -1293,9 +1306,16 @@ async def scan_github_repo(
                     "line": f.line_number,
                     "description": f.description,
                     "code_snippet": f.code_snippet[:500] if f.code_snippet else None,
+                    "matched_text": f.matched_text[:200] if f.matched_text else None,
                     "cwe_id": f.cwe_id,
                     "owasp_category": f.owasp_category,
-                    "fix": f.suggested_fix.get("description") if f.suggested_fix else None
+                    # Fingerprints
+                    "match_based_id": f.match_based_id,
+                    # Autofix
+                    "autofix_available": f.autofix_available,
+                    "fix": f.suggested_fix,
+                    # Component tags
+                    "component_tags": f.component_tags,
                 }
                 for f in all_findings[:50]  # Limit response size
             ]
@@ -1319,4 +1339,244 @@ async def list_available_rules():
         "total_rules": stats["total_rules"],
         "by_severity": stats["by_severity"],
         "by_language": stats["by_language"]
+    }
+
+
+# =============================================================================
+# Finding Triage Endpoints
+# =============================================================================
+
+class TriageFindingRequest(BaseModel):
+    status: str = Field(..., description="New triage status: open, to_fix, reviewing, ignored, fixed")
+    reason: Optional[str] = Field(None, description="Reason for status change (required for ignored)")
+    comment: Optional[str] = Field(None, description="Optional comment")
+
+
+@router.patch("/finding/{finding_id}/triage")
+async def triage_finding(
+    finding_id: str,
+    request: TriageFindingRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update the triage status of a finding.
+    
+    Statuses:
+    - open: New finding, not yet reviewed
+    - reviewing: Under review
+    - to_fix: Acknowledged, scheduled for fix
+    - ignored: Intentionally ignored (requires reason)
+    - fixed: Manually marked as fixed
+    """
+    valid_statuses = ["open", "reviewing", "to_fix", "ignored", "fixed"]
+    if request.status not in valid_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid status. Must be one of: {valid_statuses}"
+        )
+    
+    if request.status == "ignored" and not request.reason:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reason is required when ignoring a finding"
+        )
+    
+    # Get the finding
+    result = await db.execute(
+        select(AuditFinding).where(AuditFinding.id == finding_id)
+    )
+    finding = result.scalar_one_or_none()
+    
+    if not finding:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Finding not found"
+        )
+    
+    # Verify user owns the scan
+    scan_result = await db.execute(
+        select(AuditScan).where(AuditScan.id == finding.scan_id)
+    )
+    scan = scan_result.scalar_one_or_none()
+    
+    if not scan or scan.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to triage this finding"
+        )
+    
+    # Update triage status
+    finding.triage_status = request.status
+    finding.triage_reason = request.reason
+    finding.triage_comment = request.comment
+    finding.triaged_by = user.id
+    finding.triaged_at = datetime.utcnow()
+    
+    await db.commit()
+    
+    return {
+        "finding_id": finding_id,
+        "triage_status": finding.triage_status,
+        "triage_reason": finding.triage_reason,
+        "triaged_at": finding.triaged_at.isoformat() if finding.triaged_at else None
+    }
+
+
+@router.get("/finding/{finding_id}")
+async def get_finding_details(
+    finding_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get detailed information about a specific finding.
+    Includes code context, autofix, component tags, and triage history.
+    """
+    result = await db.execute(
+        select(AuditFinding).where(AuditFinding.id == finding_id)
+    )
+    finding = result.scalar_one_or_none()
+    
+    if not finding:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Finding not found"
+        )
+    
+    # Verify user owns the scan
+    scan_result = await db.execute(
+        select(AuditScan).where(AuditScan.id == finding.scan_id)
+    )
+    scan = scan_result.scalar_one_or_none()
+    
+    if not scan or scan.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this finding"
+        )
+    
+    # Parse JSON fields
+    suggested_fix = None
+    if finding.suggested_fix:
+        try:
+            suggested_fix = json.loads(finding.suggested_fix)
+        except:
+            suggested_fix = {"description": finding.suggested_fix}
+    
+    component_tags = []
+    if finding.component_tags:
+        try:
+            component_tags = json.loads(finding.component_tags)
+        except:
+            component_tags = []
+    
+    references = []
+    if finding.references:
+        try:
+            references = json.loads(finding.references)
+        except:
+            references = []
+    
+    return {
+        "id": str(finding.id),
+        "scan_id": str(finding.scan_id),
+        "rule_id": finding.rule_id,
+        "finding_type": finding.finding_type,
+        "severity": finding.severity,
+        "confidence": finding.confidence,
+        # Location
+        "file_path": finding.file_path,
+        "line_number": finding.line_number,
+        "column_number": finding.column_number,
+        "code_snippet": finding.code_snippet,
+        "matched_text": finding.matched_text,
+        # Analysis
+        "description": finding.description,
+        "exploit_reasoning": finding.exploit_reasoning,
+        "cwe_id": finding.cwe_id,
+        "owasp_category": finding.owasp_category,
+        "references": references,
+        # Fingerprints
+        "match_based_id": finding.match_based_id,
+        "syntactic_id": finding.syntactic_id,
+        # Autofix
+        "autofix_available": finding.autofix_available,
+        "autofix_code": finding.autofix_code,
+        "suggested_fix": suggested_fix,
+        # Component tags
+        "component_tags": component_tags,
+        # Triage
+        "triage_status": finding.triage_status,
+        "triage_reason": finding.triage_reason,
+        "triage_comment": finding.triage_comment,
+        "triaged_at": finding.triaged_at.isoformat() if finding.triaged_at else None,
+        # Tracking
+        "first_seen_at": finding.first_seen_at.isoformat() if finding.first_seen_at else None,
+        "last_seen_at": finding.last_seen_at.isoformat() if finding.last_seen_at else None,
+        "occurrence_count": finding.occurrence_count,
+        # Timestamps
+        "created_at": finding.created_at.isoformat() if finding.created_at else None,
+        # Scan context
+        "scan": {
+            "id": str(scan.id),
+            "repo_url": scan.repo_url,
+            "branch": scan.branch,
+            "completed_at": scan.completed_at.isoformat() if scan.completed_at else None
+        }
+    }
+
+
+@router.post("/finding/{finding_id}/apply-fix")
+async def apply_autofix(
+    finding_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Mark an autofix as applied.
+    Note: This doesn't actually modify code - it just records that the fix was applied.
+    """
+    result = await db.execute(
+        select(AuditFinding).where(AuditFinding.id == finding_id)
+    )
+    finding = result.scalar_one_or_none()
+    
+    if not finding:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Finding not found"
+        )
+    
+    if not finding.autofix_available:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No autofix available for this finding"
+        )
+    
+    # Verify user owns the scan
+    scan_result = await db.execute(
+        select(AuditScan).where(AuditScan.id == finding.scan_id)
+    )
+    scan = scan_result.scalar_one_or_none()
+    
+    if not scan or scan.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this finding"
+        )
+    
+    # Mark as applied
+    finding.autofix_applied = True
+    finding.autofix_applied_at = datetime.utcnow()
+    finding.triage_status = "fixed"
+    finding.triaged_by = user.id
+    finding.triaged_at = datetime.utcnow()
+    
+    await db.commit()
+    
+    return {
+        "finding_id": finding_id,
+        "autofix_applied": True,
+        "triage_status": "fixed"
     }

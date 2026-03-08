@@ -136,6 +136,9 @@ class AuditScan(Base):
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
+    # Project reference (for cross-scan tracking)
+    project_id = Column(UUID(), ForeignKey("audit_projects.id", ondelete="SET NULL"))
+    
     # Source info
     source_type = Column(String(20), nullable=False)  # github, gitlab, zip, paste
     repo_url = Column(Text)
@@ -170,7 +173,13 @@ class AuditScan(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
+    # Cross-scan comparison stats
+    new_findings_count = Column(Integer, default=0)
+    fixed_findings_count = Column(Integer, default=0)
+    unchanged_findings_count = Column(Integer, default=0)
+    
     # Relationships
+    project = relationship("AuditProject", back_populates="scans")
     findings = relationship("AuditFinding", back_populates="scan", cascade="all, delete-orphan")
     dependencies = relationship("AuditDependency", back_populates="scan", cascade="all, delete-orphan")
     
@@ -189,30 +198,59 @@ class AuditFinding(Base):
     finding_type = Column(String(50), nullable=False)  # sql_injection, xss, etc.
     severity = Column(String(20), nullable=False)  # critical, high, medium, low
     confidence = Column(String(20), nullable=False, default="medium")  # high, medium, low
+    rule_id = Column(String(128))  # Full rule ID like "python.security.sql-injection"
+    
+    # Fingerprinting for deduplication (Semgrep-inspired)
+    match_based_id = Column(String(64))  # Hash of: file_path + rule_id + pattern_with_values
+    syntactic_id = Column(String(64))    # Hash of: file_path + rule_id + literal_code
     
     # Location
     file_path = Column(Text, nullable=False)
     line_number = Column(Integer)
     column_number = Column(Integer)
     code_snippet = Column(Text)
+    matched_text = Column(Text)  # The exact text that matched the rule
     
     # Analysis
     description = Column(Text, nullable=False)
     exploit_reasoning = Column(Text)
     suggested_fix = Column(Text)  # JSON string with { description, diff }
+    dataflow_trace = Column(Text)  # JSON: [{source, sink, propagators}] for taint analysis
     
     # References
     cwe_id = Column(String(20))
     owasp_category = Column(String(50))
     references = Column(Text)  # JSON array
     
-    # Status
-    finding_status = Column(String(20), default="open")  # open, acknowledged, fixed, false_positive
+    # Triage status (Semgrep-inspired workflow)
+    triage_status = Column(String(32), default="open")  # open, to_fix, reviewing, ignored, fixed, removed
+    triage_reason = Column(String(64))  # false_positive, acceptable_risk, no_time, etc.
+    triage_comment = Column(Text)
+    triaged_by = Column(UUID(), ForeignKey("users.id", ondelete="SET NULL"))
+    triaged_at = Column(DateTime(timezone=True))
+    
+    # Autofix
+    autofix_available = Column(Boolean, default=False)
+    autofix_code = Column(Text)  # The suggested fix code
+    autofix_applied = Column(Boolean, default=False)
+    autofix_applied_at = Column(DateTime(timezone=True))
+    
+    # Component tagging
+    component_tags = Column(Text)  # JSON array: ["auth", "payments", "infrastructure"]
+    
+    # Tracking across scans
+    first_seen_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_seen_at = Column(DateTime(timezone=True), server_default=func.now())
+    occurrence_count = Column(Integer, default=1)
+    
+    # Legacy status field (deprecated, use triage_status)
+    finding_status = Column(String(20), default="open")
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     scan = relationship("AuditScan", back_populates="findings")
+    notes = relationship("FindingNote", back_populates="finding", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<AuditFinding {self.finding_type} ({self.severity})>"
@@ -249,6 +287,59 @@ class AuditDependency(Base):
 # =============================================================================
 # GitHub Integration Models
 # =============================================================================
+
+class FindingNote(Base):
+    """Notes/comments on a finding for team collaboration."""
+    __tablename__ = "finding_notes"
+    
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    finding_id = Column(UUID(), ForeignKey("audit_findings.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    content = Column(Text, nullable=False)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    finding = relationship("AuditFinding", back_populates="notes")
+    user = relationship("User")
+    
+    def __repr__(self):
+        return f"<FindingNote {self.id}>"
+
+
+class AuditProject(Base):
+    """Project for organizing scans and tracking findings across time."""
+    __tablename__ = "audit_projects"
+    
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    repo_url = Column(String(512))
+    default_branch = Column(String(64), default="main")
+    
+    # Stats
+    total_findings = Column(Integer, default=0)
+    open_findings = Column(Integer, default=0)
+    fixed_findings = Column(Integer, default=0)
+    ignored_findings = Column(Integer, default=0)
+    
+    # Settings
+    auto_scan = Column(Boolean, default=False)
+    notification_settings = Column(Text)  # JSON
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    scans = relationship("AuditScan", back_populates="project")
+    
+    def __repr__(self):
+        return f"<AuditProject {self.name}>"
+
 
 class GitHubConnection(Base):
     """GitHub OAuth connection for a user."""

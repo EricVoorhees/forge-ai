@@ -9,6 +9,9 @@ from dataclasses import dataclass, field
 
 from .rules.base import Rule, RuleMatch, Severity, Confidence
 from .rules.loader import RuleLoader
+from .fingerprint import generate_fingerprints
+from .autofix import AutofixEngine
+from .triage import infer_component_tags
 
 
 @dataclass
@@ -30,6 +33,15 @@ class Finding:
     references: List[str] = field(default_factory=list)
     matched_text: Optional[str] = None
     metavariables: Dict[str, str] = field(default_factory=dict)
+    # Fingerprinting
+    match_based_id: Optional[str] = None
+    syntactic_id: Optional[str] = None
+    # Autofix
+    autofix_available: bool = False
+    autofix_code: Optional[str] = None
+    autofix_description: Optional[str] = None
+    # Component tags
+    component_tags: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -75,6 +87,7 @@ class AuditAnalyzerV2:
     
     def __init__(self):
         self.rule_loader = RuleLoader()
+        self.autofix_engine = AutofixEngine()
     
     def detect_language(self, code: str, file_path: str = "") -> str:
         """Detect the programming language of the code."""
@@ -153,11 +166,53 @@ class AuditAnalyzerV2:
                 if rule.fix:
                     suggested_fix = {
                         "description": rule.fix,
-                        "diff": None  # Could generate actual diff
+                        "diff": None
                     }
                 
+                # Generate fingerprints for deduplication
+                finding_index = findings_per_rule.get(rule.id, 0)
+                fingerprints = generate_fingerprints(
+                    file_path=context.file_path,
+                    rule_id=rule.id,
+                    matched_text=match.matched_text,
+                    code_snippet=code_snippet,
+                    line_number=match.line_number,
+                    index=finding_index
+                )
+                
+                # Try to generate autofix
+                autofix_available = False
+                autofix_code = None
+                autofix_description = None
+                
+                autofix_result = self.autofix_engine.generate_fix(
+                    rule_id=rule.id,
+                    matched_text=match.matched_text,
+                    code_snippet=code_snippet,
+                    language=context.language
+                )
+                if autofix_result:
+                    autofix_available = True
+                    autofix_code = autofix_result.fixed_code
+                    autofix_description = autofix_result.description
+                    # Override suggested_fix with actual autofix
+                    suggested_fix = {
+                        "description": autofix_result.description,
+                        "diff": autofix_result.diff,
+                        "fixed_code": autofix_result.fixed_code,
+                        "confidence": autofix_result.confidence
+                    }
+                
+                # Infer component tags
+                finding_type = self._extract_finding_type(rule.id)
+                component_tags = infer_component_tags(
+                    file_path=context.file_path,
+                    finding_type=finding_type,
+                    code_snippet=code_snippet
+                )
+                
                 finding = Finding(
-                    finding_type=self._extract_finding_type(rule.id),
+                    finding_type=finding_type,
                     severity=rule.severity.value,
                     confidence=rule.confidence.value,
                     file_path=context.file_path,
@@ -172,6 +227,13 @@ class AuditAnalyzerV2:
                     suggested_fix=suggested_fix,
                     matched_text=match.matched_text,
                     metavariables=match.metavariables,
+                    # New fields
+                    match_based_id=fingerprints.match_based_id,
+                    syntactic_id=fingerprints.syntactic_id,
+                    autofix_available=autofix_available,
+                    autofix_code=autofix_code,
+                    autofix_description=autofix_description,
+                    component_tags=component_tags,
                 )
                 findings.append(finding)
                 findings_per_rule[rule.id] = findings_per_rule.get(rule.id, 0) + 1
