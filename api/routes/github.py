@@ -162,10 +162,10 @@ async def github_oauth_callback(
     
     await db.commit()
     
-    # Redirect to dashboard with success
-    # In production, redirect to frontend URL
+    # Redirect to frontend dashboard with success
+    frontend_url = "https://openframe.co/dashboard/audit?github=connected"
     return RedirectResponse(
-        url="/dashboard/audit?github=connected",
+        url=frontend_url,
         status_code=status.HTTP_302_FOUND
     )
 
