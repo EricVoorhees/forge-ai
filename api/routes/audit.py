@@ -590,16 +590,17 @@ async def try_audit(
     findings = analyzer.analyze_code(context)
     
     # Check if user has a subscription for LLM enrichment
+    # Default to "testing" plan for free usage during development
     sub_result = await db.execute(
         select(Subscription).where(Subscription.user_id == user.id)
     )
     subscription = sub_result.scalar_one_or_none()
-    plan = subscription.plan if subscription and subscription.status == "active" else "free"
+    plan = subscription.plan if subscription and subscription.status == "active" else "testing"
     
     total_tokens = 0
     
-    # Only enrich with LLM if user has paid subscription
-    if plan != "free" and findings:
+    # Only enrich with LLM if user has paid subscription or testing plan
+    if plan not in ["free"] and findings:
         reasoning_engine = ForgeReasoningEngine(model=request.model)
         
         for finding in findings[:3]:  # Limit for try feature

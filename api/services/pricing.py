@@ -31,6 +31,7 @@ MODEL_RATES: Dict[str, Dict[str, ModelPlanRates]] = {
         "pro": ModelPlanRates(Decimal("1.00"), Decimal("1.91")),        # +2% premium
         "enterprise": ModelPlanRates(Decimal("0.98"), Decimal("1.83")), # Best overall
         "free": ModelPlanRates(Decimal("0.98"), Decimal("1.87")),
+        "testing": ModelPlanRates(Decimal("0"), Decimal("0")),          # Free for testing
     },
     # Forge Mini (GPT-OSS-120B) - Your cost: $0.04/$0.19
     "forge-mini": {
@@ -39,6 +40,7 @@ MODEL_RATES: Dict[str, Dict[str, ModelPlanRates]] = {
         "pro": ModelPlanRates(Decimal("0.081"), Decimal("0.38")),       # +3% premium
         "enterprise": ModelPlanRates(Decimal("0.079"), Decimal("0.36")), # Best overall
         "free": ModelPlanRates(Decimal("0.079"), Decimal("0.37")),
+        "testing": ModelPlanRates(Decimal("0"), Decimal("0")),          # Free for testing
     },
 }
 
@@ -49,6 +51,7 @@ PLAN_PRICES = {
     "pro": Decimal("79"),
     "enterprise": Decimal("299"),
     "metered": Decimal("0"),
+    "testing": Decimal("0"),  # Free testing plan
 }
 
 
@@ -67,6 +70,7 @@ PLAN_RATES = {
     "pro": PlanRates(Decimal("79"), Decimal("1.00"), Decimal("1.91")),
     "enterprise": PlanRates(Decimal("299"), Decimal("0.98"), Decimal("1.83")),
     "metered": PlanRates(Decimal("0"), Decimal("0.98"), Decimal("1.87")),
+    "testing": PlanRates(Decimal("0"), Decimal("0"), Decimal("0")),  # Free testing
 }
 
 
