@@ -577,125 +577,138 @@ async def try_audit(
     Limited to static analysis only (no LLM enrichment) for free users.
     Optionally saves results to user's dashboard.
     """
-    language = request.language or analyzer.detect_language(request.code)
-    
-    context = AnalysisContext(
-        code=request.code,
-        language=language,
-        file_path="input.txt",
-        context_description=None
-    )
-    
-    # Run static analysis
-    findings = analyzer.analyze_code(context)
-    
-    # Check if user has a subscription for LLM enrichment
-    # Default to "testing" plan for free usage during development
-    sub_result = await db.execute(
-        select(Subscription).where(Subscription.user_id == user.id)
-    )
-    subscription = sub_result.scalar_one_or_none()
-    plan = subscription.plan if subscription and subscription.status == "active" else "testing"
-    
-    total_tokens = 0
-    
-    # Only enrich with LLM if user has paid subscription or testing plan
-    if plan not in ["free"] and findings:
-        reasoning_engine = ForgeReasoningEngine(model=request.model)
+    try:
+        language = request.language or analyzer.detect_language(request.code)
         
-        for finding in findings[:3]:  # Limit for try feature
-            enriched = await reasoning_engine.analyze_vulnerability(
-                finding=finding,
-                code_context=finding.code_snippet,
-                language=language
-            )
-            finding.exploit_reasoning = enriched.exploit_reasoning
-            finding.suggested_fix = enriched.suggested_fix
-            total_tokens += 1000
-        
-        # Deduct credits for paid users
-        if subscription:
-            cost = calculate_cost(request.model, plan, total_tokens, total_tokens // 2)
-            subscription.credit_balance = max(Decimal("0"), subscription.credit_balance - cost)
-            await log_usage(db, str(user.id), total_tokens, total_tokens // 2, cost=float(cost))
-    
-    severity_counts = analyzer.get_severity_counts(findings)
-    scan_id = None
-    
-    # Optionally save to dashboard
-    if request.save:
-        scan = AuditScan(
-            user_id=user.id,
-            source_type="paste",
-            status="completed",
-            completed_at=datetime.utcnow(),
-            total_findings=len(findings),
-            critical_count=severity_counts.get("critical", 0),
-            high_count=severity_counts.get("high", 0),
-            medium_count=severity_counts.get("medium", 0),
-            low_count=severity_counts.get("low", 0),
-            files_scanned=1,
-            lines_of_code=analyzer.count_lines(request.code),
-            languages=json.dumps([language]) if language else None,
-            tokens_used=total_tokens,
-            model=request.model
+        context = AnalysisContext(
+            code=request.code,
+            language=language,
+            file_path="input.txt",
+            context_description=None
         )
-        db.add(scan)
-        await db.flush()
         
-        # Save findings
-        for f in findings:
-            db_finding = AuditFinding(
-                scan_id=scan.id,
-                finding_type=f.finding_type,
-                severity=f.severity,
-                confidence=f.confidence,
-                file_path=f.file_path,
-                line_number=f.line_number,
-                column_number=f.column_number,
-                code_snippet=f.code_snippet,
-                description=f.description,
-                exploit_reasoning=f.exploit_reasoning,
-                suggested_fix=json.dumps(f.suggested_fix) if f.suggested_fix else None,
-                cwe_id=f.cwe_id,
-                owasp_category=f.owasp_category
+        # Run static analysis
+        findings = analyzer.analyze_code(context)
+        
+        # Check if user has a subscription for LLM enrichment
+        # Default to "testing" plan for free usage during development
+        sub_result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user.id)
+        )
+        subscription = sub_result.scalar_one_or_none()
+        plan = subscription.plan if subscription and subscription.status == "active" else "testing"
+        
+        total_tokens = 0
+        
+        # Try LLM enrichment but don't fail if it errors
+        if plan not in ["free"] and findings:
+            try:
+                reasoning_engine = ForgeReasoningEngine(model=request.model)
+                
+                for finding in findings[:3]:  # Limit for try feature
+                    enriched = await reasoning_engine.analyze_vulnerability(
+                        finding=finding,
+                        code_context=finding.code_snippet,
+                        language=language
+                    )
+                    finding.exploit_reasoning = enriched.exploit_reasoning
+                    finding.suggested_fix = enriched.suggested_fix
+                    total_tokens += 1000
+                
+                # Deduct credits for paid users
+                if subscription:
+                    cost = calculate_cost(request.model, plan, total_tokens, total_tokens // 2)
+                    subscription.credit_balance = max(Decimal("0"), subscription.credit_balance - cost)
+                    await log_usage(db, str(user.id), total_tokens, total_tokens // 2, cost=float(cost))
+            except Exception as llm_err:
+                # Log but don't fail - static analysis results are still valid
+                import logging
+                logging.error(f"LLM enrichment failed: {llm_err}")
+        
+        severity_counts = analyzer.get_severity_counts(findings)
+        scan_id = None
+        
+        # Optionally save to dashboard
+        if request.save:
+            scan = AuditScan(
+                user_id=user.id,
+                source_type="paste",
+                status="completed",
+                completed_at=datetime.utcnow(),
+                total_findings=len(findings),
+                critical_count=severity_counts.get("critical", 0),
+                high_count=severity_counts.get("high", 0),
+                medium_count=severity_counts.get("medium", 0),
+                low_count=severity_counts.get("low", 0),
+                files_scanned=1,
+                lines_of_code=analyzer.count_lines(request.code),
+                languages=json.dumps([language]) if language else None,
+                tokens_used=total_tokens,
+                model=request.model
             )
-            db.add(db_finding)
+            db.add(scan)
+            await db.flush()
+            
+            # Save findings
+            for f in findings:
+                db_finding = AuditFinding(
+                    scan_id=scan.id,
+                    finding_type=f.finding_type,
+                    severity=f.severity,
+                    confidence=f.confidence,
+                    file_path=f.file_path,
+                    line_number=f.line_number,
+                    column_number=f.column_number,
+                    code_snippet=f.code_snippet,
+                    description=f.description,
+                    exploit_reasoning=f.exploit_reasoning,
+                    suggested_fix=json.dumps(f.suggested_fix) if f.suggested_fix else None,
+                    cwe_id=f.cwe_id,
+                    owasp_category=f.owasp_category
+                )
+                db.add(db_finding)
+            
+            scan_id = str(scan.id)
         
-        scan_id = str(scan.id)
-    
-    await db.commit()
-    
-    return {
-        "scan_id": scan_id,
-        "language": language,
-        "lines_of_code": analyzer.count_lines(request.code),
-        "plan": plan,
-        "summary": {
-            "total_findings": len(findings),
-            **severity_counts
-        },
-        "findings": [
-            {
-                "type": f.finding_type,
-                "severity": f.severity,
-                "confidence": f.confidence,
-                "line": f.line_number,
-                "column": f.column_number,
-                "code_snippet": f.code_snippet,
-                "description": f.description,
-                "exploit_reasoning": f.exploit_reasoning,
-                "suggested_fix": f.suggested_fix,
-                "cwe_id": f.cwe_id,
-                "owasp_category": f.owasp_category
+        await db.commit()
+        
+        return {
+            "scan_id": scan_id,
+            "language": language,
+            "lines_of_code": analyzer.count_lines(request.code),
+            "plan": plan,
+            "summary": {
+                "total_findings": len(findings),
+                **severity_counts
+            },
+            "findings": [
+                {
+                    "type": f.finding_type,
+                    "severity": f.severity,
+                    "confidence": f.confidence,
+                    "line": f.line_number,
+                    "column": f.column_number,
+                    "code_snippet": f.code_snippet,
+                    "description": f.description,
+                    "exploit_reasoning": f.exploit_reasoning,
+                    "suggested_fix": f.suggested_fix,
+                    "cwe_id": f.cwe_id,
+                    "owasp_category": f.owasp_category
+                }
+                for f in findings
+            ],
+            "usage": {
+                "tokens_used": total_tokens,
+                "cost": 0 if plan == "free" else float(calculate_cost(request.model, plan, total_tokens, total_tokens // 2))
             }
-            for f in findings
-        ],
-        "usage": {
-            "tokens_used": total_tokens,
-            "cost": 0 if plan == "free" else float(calculate_cost(request.model, plan, total_tokens, total_tokens // 2))
         }
-    }
+    except Exception as e:
+        import logging
+        logging.error(f"Audit try endpoint failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Audit analysis failed: {str(e)}"
+        )
 
 
 # =============================================================================
