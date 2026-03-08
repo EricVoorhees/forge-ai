@@ -13,13 +13,10 @@ const PLANS = [
     description: "For individuals and small projects",
     price: 19,
     priceYearly: 190,
-    inputRate: 1.05,
-    outputRate: 2.10,
     rateNote: "Bundled credits",
     features: [
       "$19 in credits/month",
-      "$1.05/1M input tokens",
-      "$2.10/1M output tokens",
+      "Access to all models",
       "60 requests/minute",
       "Chat + API access",
       "Email support",
@@ -33,13 +30,10 @@ const PLANS = [
     description: "For professionals and growing teams",
     price: 79,
     priceYearly: 790,
-    inputRate: 1.02,
-    outputRate: 2.05,
     rateNote: "Near API rates",
     features: [
       "$79 in credits/month",
-      "$1.02/1M input tokens",
-      "$2.05/1M output tokens",
+      "Access to all models",
       "120 requests/minute",
       "Chat + API access",
       "Priority support",
@@ -55,13 +49,10 @@ const PLANS = [
     description: "For large teams and organizations",
     price: 299,
     priceYearly: 2990,
-    inputRate: 1.00,
-    outputRate: 1.95,
     rateNote: "Best rates",
     features: [
       "$299 in credits/month",
-      "$1.00/1M input tokens",
-      "$1.95/1M output tokens",
+      "Access to all models",
       "500 requests/minute",
       "Chat + API access",
       "Dedicated support",
@@ -73,24 +64,71 @@ const PLANS = [
   },
 ];
 
+// Model-specific pricing per plan
+const MODEL_PRICING = {
+  "forge-coder": {
+    name: "Forge Coder",
+    description: "Premium 671B coding model",
+    api: { input: 0.98, output: 1.87 },
+    starter: { input: 1.03, output: 1.96 },
+    pro: { input: 1.00, output: 1.91 },
+    enterprise: { input: 0.98, output: 1.83 },
+  },
+  "forge-mini": {
+    name: "Forge Mini",
+    description: "Fast, affordable 120B model",
+    api: { input: 0.079, output: 0.37 },
+    starter: { input: 0.083, output: 0.39 },
+    pro: { input: 0.081, output: 0.38 },
+    enterprise: { input: 0.079, output: 0.36 },
+  },
+};
+
 const API_PRICING = {
-  input: 1.00,
-  output: 2.00,
-  description: "Pay-as-you-go with no commitment. Best for variable usage.",
+  "forge-coder": { input: 0.98, output: 1.87 },
+  "forge-mini": { input: 0.079, output: 0.37 },
 };
 
 function TokenCalculator() {
   const [inputTokens, setInputTokens] = useState(1);
   const [outputTokens, setOutputTokens] = useState(1);
+  const [selectedModel, setSelectedModel] = useState<"forge-coder" | "forge-mini">("forge-coder");
 
-  const inputCost = inputTokens * API_PRICING.input;
-  const outputCost = outputTokens * API_PRICING.output;
+  const pricing = API_PRICING[selectedModel];
+  const inputCost = inputTokens * pricing.input;
+  const outputCost = outputTokens * pricing.output;
   const totalCost = inputCost + outputCost;
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-2xl p-6 md:p-8">
       <h3 className="text-white text-lg font-semibold mb-4">Cost Calculator</h3>
       <div className="space-y-4">
+        {/* Model Selector */}
+        <div>
+          <label className="text-white/60 text-sm mb-2 block">Model</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedModel("forge-coder")}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                selectedModel === "forge-coder"
+                  ? "bg-orange-500 text-white"
+                  : "bg-white/5 text-white/70 hover:bg-white/10"
+              }`}
+            >
+              Forge Coder
+            </button>
+            <button
+              onClick={() => setSelectedModel("forge-mini")}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                selectedModel === "forge-mini"
+                  ? "bg-orange-500 text-white"
+                  : "bg-white/5 text-white/70 hover:bg-white/10"
+              }`}
+            >
+              Forge Mini
+            </button>
+          </div>
+        </div>
         <div>
           <label className="text-white/60 text-sm mb-2 block">Input Tokens (millions)</label>
           <input
@@ -284,27 +322,59 @@ export default function PricingPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Pricing Cards */}
+            {/* Model Pricing Cards */}
             <div className="space-y-4">
-              <div className="bg-black/40 border border-white/10 rounded-2xl p-6 flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-semibold mb-1">Input Tokens</h4>
-                  <p className="text-white/50 text-sm">Prompts and context you send</p>
+              {/* Forge Coder */}
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold">Forge Coder</h4>
+                    <p className="text-white/50 text-sm">Premium 671B coding model</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-white">${API_PRICING.input.toFixed(2)}</span>
-                  <span className="text-white/50 text-sm block">per 1M tokens</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <span className="text-white/50 text-xs block mb-1">Input</span>
+                    <span className="text-xl font-bold text-white">$0.98</span>
+                    <span className="text-white/50 text-xs">/1M</span>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <span className="text-white/50 text-xs block mb-1">Output</span>
+                    <span className="text-xl font-bold text-white">$1.87</span>
+                    <span className="text-white/50 text-xs">/1M</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-black/40 border border-white/10 rounded-2xl p-6 flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-semibold mb-1">Output Tokens</h4>
-                  <p className="text-white/50 text-sm">Generated responses</p>
+              {/* Forge Mini */}
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold">Forge Mini</h4>
+                    <p className="text-white/50 text-sm">Fast, affordable 120B model</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-white">${API_PRICING.output.toFixed(2)}</span>
-                  <span className="text-white/50 text-sm block">per 1M tokens</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <span className="text-white/50 text-xs block mb-1">Input</span>
+                    <span className="text-xl font-bold text-white">$0.079</span>
+                    <span className="text-white/50 text-xs">/1M</span>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <span className="text-white/50 text-xs block mb-1">Output</span>
+                    <span className="text-xl font-bold text-white">$0.37</span>
+                    <span className="text-white/50 text-xs">/1M</span>
+                  </div>
                 </div>
               </div>
 
@@ -356,17 +426,23 @@ export default function PricingPage() {
                   <td className="py-4 text-center text-white">$79</td>
                   <td className="py-4 text-center text-white">$299</td>
                 </tr>
-                <tr className="border-b border-white/5">
-                  <td className="py-4 text-white/70">Input Token Rate</td>
-                  <td className="py-4 text-center text-white">$1.05/1M</td>
-                  <td className="py-4 text-center text-white">$1.02/1M</td>
-                  <td className="py-4 text-center text-white">$1.00/1M</td>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <td colSpan={4} className="py-2 text-white/50 text-xs font-medium uppercase tracking-wide">Forge Coder (671B)</td>
                 </tr>
                 <tr className="border-b border-white/5">
-                  <td className="py-4 text-white/70">Output Token Rate</td>
-                  <td className="py-4 text-center text-white">$2.10/1M</td>
-                  <td className="py-4 text-center text-white">$2.05/1M</td>
-                  <td className="py-4 text-center text-white">$1.95/1M</td>
+                  <td className="py-4 text-white/70 pl-4">Input / Output</td>
+                  <td className="py-4 text-center text-white">$1.03 / $1.96</td>
+                  <td className="py-4 text-center text-white">$1.00 / $1.91</td>
+                  <td className="py-4 text-center text-white">$0.98 / $1.83</td>
+                </tr>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <td colSpan={4} className="py-2 text-white/50 text-xs font-medium uppercase tracking-wide">Forge Mini (120B)</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 text-white/70 pl-4">Input / Output</td>
+                  <td className="py-4 text-center text-white">$0.083 / $0.39</td>
+                  <td className="py-4 text-center text-white">$0.081 / $0.38</td>
+                  <td className="py-4 text-center text-white">$0.079 / $0.36</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-4 text-white/70">vs API Pricing</td>

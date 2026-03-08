@@ -2,8 +2,9 @@
 FORGE Inference Client
 HTTP client for Fireworks.ai (OpenAI-compatible)
 
-Model: DeepSeek V3.1 671B MoE (MIT license, open source)
-Pricing: $0.90/1M tokens (input + output)
+Supports multiple models:
+- forge-coder: DeepSeek V3.1 671B
+- forge-mini: GPT-OSS-120B
 """
 
 import httpx
@@ -12,12 +13,13 @@ from typing import AsyncIterator, List, Dict, Any, Optional
 
 from config import settings
 from services.logging import get_logger
+from services.models import get_model, ModelConfig
 
 logger = get_logger("services.inference")
 
 
 # Default system prompt for FORGE identity (only used if no system prompt provided)
-FORGE_SYSTEM_PROMPT = """If asked about your identity, model name, or what AI you are, respond that you are FORGE - an AI coding assistant. Do not mention DeepSeek or any underlying model architecture. Otherwise, respond naturally without mentioning being an assistant unless contextually appropriate."""
+FORGE_SYSTEM_PROMPT = """If asked about your identity, model name, or what AI you are, respond that you are FORGE - an AI coding assistant. Do not mention DeepSeek, GPT-OSS, or any underlying model architecture. Otherwise, respond naturally without mentioning being an assistant unless contextually appropriate."""
 
 
 class InferenceClient:
@@ -25,11 +27,10 @@ class InferenceClient:
     
     def __init__(self):
         self.base_url = settings.inference_url
-        self.model = settings.inference_model
         self.api_key = settings.fireworks_api_key
         self.timeout = httpx.Timeout(settings.inference_timeout)
         self._client: Optional[httpx.AsyncClient] = None
-        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "model": self.model, "timeout": settings.inference_timeout}})
+        logger.info(f"InferenceClient initialized", extra={"extra_data": {"base_url": self.base_url, "timeout": settings.inference_timeout}})
     
     @property
     def client(self) -> httpx.AsyncClient:
@@ -76,18 +77,18 @@ class InferenceClient:
         """Send chat completion request to Fireworks.ai API."""
         start_time = time.time()
         
-        # Use configured model - ignore placeholder model names from API requests
-        if not model or model in ("forge-coder", "forge-671b", "forge-1"):
-            model = self.model
+        # Resolve FORGE model to provider model
+        model_config = get_model(model or "forge-coder")
+        provider_model = model_config.provider_model
         
         # Inject FORGE identity if no system prompt provided
         messages = self._inject_forge_identity(messages)
         
-        logger.info(f"Chat completion request", extra={"extra_data": {"model": model, "messages_count": len(messages), "max_tokens": max_tokens, "temperature": temperature}})
+        logger.info(f"Chat completion request", extra={"extra_data": {"forge_model": model_config.id, "provider_model": provider_model, "messages_count": len(messages), "max_tokens": max_tokens, "temperature": temperature}})
         
         # OpenAI-compatible request
         payload = {
-            "model": model,
+            "model": provider_model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -136,17 +137,17 @@ class InferenceClient:
         start_time = time.time()
         chunk_count = 0
         
-        # Use configured model - ignore placeholder model names from API requests
-        if not model or model in ("forge-coder", "forge-671b", "forge-1"):
-            model = self.model
+        # Resolve FORGE model to provider model
+        model_config = get_model(model or "forge-coder")
+        provider_model = model_config.provider_model
         
         # Inject FORGE identity if no system prompt provided
         messages = self._inject_forge_identity(messages)
         
-        logger.info(f"Chat completion stream request", extra={"extra_data": {"model": model, "messages_count": len(messages), "max_tokens": max_tokens}})
+        logger.info(f"Chat completion stream request", extra={"extra_data": {"forge_model": model_config.id, "provider_model": provider_model, "messages_count": len(messages), "max_tokens": max_tokens}})
         
         payload = {
-            "model": model,
+            "model": provider_model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,

@@ -1,75 +1,76 @@
 """
 FORGE Pricing Service
-Defines plan rates and handles credit deduction for usage-based billing.
+Per-model, per-plan pricing with natural-looking rates.
 
 Plans work like prepaid credits:
 - User pays $19/$79/$299 upfront
 - Gets that amount as credit balance
-- Each API call deducts credits based on plan-specific token rates
-- Higher plans get better rates (more tokens per dollar)
+- Each API call deducts credits based on model + plan rates
+- Higher plans get slightly better rates
 """
 
 from decimal import Decimal
-from typing import Tuple
+from typing import Tuple, Dict
 from dataclasses import dataclass
 
 
 @dataclass
-class PlanRates:
-    """Token rates for a subscription plan (cost per 1M tokens in USD)."""
-    input_rate: Decimal  # $ per 1M input tokens
-    output_rate: Decimal  # $ per 1M output tokens
-    plan_price: Decimal  # Monthly subscription price
-    
+class ModelPlanRates:
+    """Token rates for a specific model + plan combination ($/1M tokens)."""
+    input_rate: Decimal
+    output_rate: Decimal
 
-# Plan-specific token rates
-# API/Metered = best public rate
-# Starter/Pro = slightly worse than API (convenience premium for bundled credits)
-# Enterprise = slightly better than API on output only (volume reward)
-PLAN_RATES = {
-    # API pay-as-you-go - BEST public rate
-    "metered": PlanRates(
-        input_rate=Decimal("1.00"),
-        output_rate=Decimal("2.00"),
-        plan_price=Decimal("0"),
-    ),
-    # Starter: slightly worse than API (~5% more expensive)
-    "starter": PlanRates(
-        input_rate=Decimal("1.05"),
-        output_rate=Decimal("2.10"),
-        plan_price=Decimal("19"),
-    ),
-    # Pro: slightly worse than API (~2% more expensive)
-    "pro": PlanRates(
-        input_rate=Decimal("1.02"),
-        output_rate=Decimal("2.05"),
-        plan_price=Decimal("79"),
-    ),
-    # Enterprise: best rate - 5 cents better on output only
-    "enterprise": PlanRates(
-        input_rate=Decimal("1.00"),
-        output_rate=Decimal("1.95"),
-        plan_price=Decimal("299"),
-    ),
-    # Free plan (no API access, but define rates anyway)
-    "free": PlanRates(
-        input_rate=Decimal("1.00"),
-        output_rate=Decimal("2.00"),
-        plan_price=Decimal("0"),
-    ),
+
+# Pricing matrix: MODEL_RATES[model_id][plan] = rates
+# Natural pricing - avoid round numbers
+MODEL_RATES: Dict[str, Dict[str, ModelPlanRates]] = {
+    # Forge Coder (DeepSeek V3.1 671B) - Your cost: $0.56/$1.68
+    "forge-coder": {
+        "metered": ModelPlanRates(Decimal("0.98"), Decimal("1.87")),    # Best public rate
+        "starter": ModelPlanRates(Decimal("1.03"), Decimal("1.96")),    # +5% premium
+        "pro": ModelPlanRates(Decimal("1.00"), Decimal("1.91")),        # +2% premium
+        "enterprise": ModelPlanRates(Decimal("0.98"), Decimal("1.83")), # Best overall
+        "free": ModelPlanRates(Decimal("0.98"), Decimal("1.87")),
+    },
+    # Forge Mini (GPT-OSS-120B) - Your cost: $0.04/$0.19
+    "forge-mini": {
+        "metered": ModelPlanRates(Decimal("0.079"), Decimal("0.37")),   # Best public rate
+        "starter": ModelPlanRates(Decimal("0.083"), Decimal("0.39")),   # +5% premium
+        "pro": ModelPlanRates(Decimal("0.081"), Decimal("0.38")),       # +3% premium
+        "enterprise": ModelPlanRates(Decimal("0.079"), Decimal("0.36")), # Best overall
+        "free": ModelPlanRates(Decimal("0.079"), Decimal("0.37")),
+    },
+}
+
+# Plan prices (for credit allocation)
+PLAN_PRICES = {
+    "free": Decimal("0"),
+    "starter": Decimal("19"),
+    "pro": Decimal("79"),
+    "enterprise": Decimal("299"),
+    "metered": Decimal("0"),
 }
 
 
-def get_plan_rates(plan: str) -> PlanRates:
-    """Get the token rates for a given plan."""
-    return PLAN_RATES.get(plan, PLAN_RATES["free"])
+def get_rates(model: str, plan: str) -> ModelPlanRates:
+    """Get rates for a model + plan combination."""
+    # Default to forge-coder if model not found
+    model_rates = MODEL_RATES.get(model, MODEL_RATES["forge-coder"])
+    # Default to metered if plan not found
+    return model_rates.get(plan, model_rates["metered"])
 
 
-def calculate_cost(plan: str, input_tokens: int, output_tokens: int) -> Decimal:
+def get_plan_price(plan: str) -> Decimal:
+    """Get the monthly price for a plan."""
+    return PLAN_PRICES.get(plan, Decimal("0"))
+
+
+def calculate_cost(model: str, plan: str, input_tokens: int, output_tokens: int) -> Decimal:
     """
     Calculate the credit cost for a given number of tokens.
     
     Args:
+        model: The model ID (forge-coder, forge-mini)
         plan: The subscription plan name
         input_tokens: Number of input tokens used
         output_tokens: Number of output tokens used
@@ -77,7 +78,7 @@ def calculate_cost(plan: str, input_tokens: int, output_tokens: int) -> Decimal:
     Returns:
         Cost in USD (to deduct from credit balance)
     """
-    rates = get_plan_rates(plan)
+    rates = get_rates(model, plan)
     
     # Convert tokens to millions and calculate cost
     input_millions = Decimal(input_tokens) / Decimal(1_000_000)
@@ -94,7 +95,7 @@ def check_sufficient_credits(credit_balance: Decimal, estimated_cost: Decimal) -
     return credit_balance >= estimated_cost
 
 
-def estimate_max_tokens(credit_balance: Decimal, plan: str) -> Tuple[int, int]:
+def estimate_max_tokens(credit_balance: Decimal, model: str, plan: str) -> Tuple[int, int]:
     """
     Estimate how many tokens a user can afford with their remaining balance.
     Assumes 1:1 input:output ratio for estimation.
@@ -102,7 +103,7 @@ def estimate_max_tokens(credit_balance: Decimal, plan: str) -> Tuple[int, int]:
     Returns:
         Tuple of (max_input_tokens, max_output_tokens)
     """
-    rates = get_plan_rates(plan)
+    rates = get_rates(model, plan)
     
     # Cost per 1M tokens at 1:1 ratio
     cost_per_million_pair = rates.input_rate + rates.output_rate
@@ -116,23 +117,26 @@ def estimate_max_tokens(credit_balance: Decimal, plan: str) -> Tuple[int, int]:
     return (max_tokens, max_tokens)
 
 
-def get_plan_info(plan: str) -> dict:
-    """Get plan information for display."""
-    rates = get_plan_rates(plan)
-    
-    # Calculate effective rate at 1:1 ratio
-    effective_rate = (rates.input_rate + rates.output_rate) / 2
-    
-    # Calculate savings vs API
-    api_rates = get_plan_rates("metered")
-    api_effective = (api_rates.input_rate + api_rates.output_rate) / 2
-    savings_pct = ((api_effective - effective_rate) / api_effective) * 100
+def get_model_pricing_info(model: str) -> dict:
+    """Get pricing info for a model across all plans."""
+    model_rates = MODEL_RATES.get(model, MODEL_RATES["forge-coder"])
     
     return {
-        "plan": plan,
-        "price": float(rates.plan_price),
-        "input_rate": float(rates.input_rate),
-        "output_rate": float(rates.output_rate),
-        "effective_rate": float(effective_rate),
-        "savings_vs_api": float(savings_pct),
+        "model": model,
+        "plans": {
+            plan: {
+                "input_rate": float(rates.input_rate),
+                "output_rate": float(rates.output_rate),
+                "blended_rate": float((rates.input_rate + rates.output_rate) / 2),
+            }
+            for plan, rates in model_rates.items()
+        }
+    }
+
+
+def get_all_pricing() -> dict:
+    """Get complete pricing info for all models and plans."""
+    return {
+        model: get_model_pricing_info(model)
+        for model in MODEL_RATES.keys()
     }

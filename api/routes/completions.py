@@ -18,7 +18,7 @@ from auth.api_key import ApiKeyData, validate_api_key
 from services.rate_limiter import rate_limiter
 from services.inference import inference_client
 from services.usage import log_usage
-from services.pricing import calculate_cost, get_plan_rates
+from services.pricing import calculate_cost
 from sqlalchemy import select
 from decimal import Decimal
 
@@ -130,8 +130,8 @@ async def chat_completions(
     prompt_tokens = response.get("usage", {}).get("prompt_tokens", 0)
     completion_tokens = response.get("usage", {}).get("completion_tokens", 0)
     
-    # Calculate cost and deduct from credit balance
-    cost = calculate_cost(api_key.plan, prompt_tokens, completion_tokens)
+    # Calculate cost and deduct from credit balance (model + plan specific)
+    cost = calculate_cost(request.model, api_key.plan, prompt_tokens, completion_tokens)
     
     if api_key.plan != "metered":
         result = await db.execute(
@@ -177,8 +177,8 @@ async def stream_completion(
             output_tokens = completion_tokens * 4
             total_tokens = prompt_tokens + output_tokens
             
-            # Calculate cost and deduct from credit balance
-            cost = calculate_cost(api_key.plan, prompt_tokens, output_tokens)
+            # Calculate cost and deduct from credit balance (model + plan specific)
+            cost = calculate_cost(request.model, api_key.plan, prompt_tokens, output_tokens)
             
             if api_key.plan != "metered":
                 result = await db.execute(

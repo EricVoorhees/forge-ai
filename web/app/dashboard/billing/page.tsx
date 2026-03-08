@@ -10,7 +10,12 @@ const plans = [
     name: "Starter",
     price: "$19",
     rateNote: "Bundled credits",
-    features: ["$19 in credits/month", "$1.05/1M input", "$2.10/1M output", "60 req/min"],
+    features: [
+      "$19 in credits/month",
+      "Coder: $1.03/$1.96 per 1M",
+      "Mini: $0.083/$0.39 per 1M",
+      "60 req/min",
+    ],
     highlight: false,
   },
   {
@@ -18,7 +23,12 @@ const plans = [
     name: "Pro",
     price: "$79",
     rateNote: "Near API rates",
-    features: ["$79 in credits/month", "$1.02/1M input", "$2.05/1M output", "120 req/min"],
+    features: [
+      "$79 in credits/month",
+      "Coder: $1.00/$1.91 per 1M",
+      "Mini: $0.081/$0.38 per 1M",
+      "120 req/min",
+    ],
     highlight: true,
     badge: "Most Popular",
   },
@@ -27,7 +37,12 @@ const plans = [
     name: "Enterprise",
     price: "$299",
     rateNote: "Best rates",
-    features: ["$299 in credits/month", "$1.00/1M input", "$1.95/1M output", "500 req/min"],
+    features: [
+      "$299 in credits/month",
+      "Coder: $0.98/$1.83 per 1M",
+      "Mini: $0.079/$0.36 per 1M",
+      "500 req/min",
+    ],
     highlight: false,
   },
 ];
@@ -203,8 +218,8 @@ export default function BillingPage() {
           <div>
             <h3 className="text-white font-semibold">Need more tokens?</h3>
             <p className="text-[#71717a] text-sm mt-1">
-              For high-volume usage, contact us about our metered API plan with pay-as-you-go pricing 
-              at $1.00/1M input tokens and $2.00/1M output tokens.
+              For high-volume usage, contact us about our metered API plan with pay-as-you-go pricing.
+              Forge Coder: $0.98/$1.87 per 1M. Forge Mini: $0.079/$0.37 per 1M.
             </p>
             <a href="mailto:support@openframe.co" className="text-orange-400 text-sm mt-2 inline-block hover:underline">
               Contact Sales →
