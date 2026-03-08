@@ -244,3 +244,37 @@ class AuditDependency(Base):
     
     def __repr__(self):
         return f"<AuditDependency {self.package_name}@{self.package_version}>"
+
+
+# =============================================================================
+# GitHub Integration Models
+# =============================================================================
+
+class GitHubConnection(Base):
+    """GitHub OAuth connection for a user."""
+    __tablename__ = "github_connections"
+    
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    
+    # GitHub user info
+    github_user_id = Column(Integer, nullable=False)
+    github_username = Column(String(255), nullable=False)
+    github_email = Column(String(255))
+    github_avatar_url = Column(Text)
+    
+    # OAuth tokens (encrypted in production)
+    access_token = Column(Text, nullable=False)
+    token_type = Column(String(32), default="bearer")
+    scope = Column(Text)  # Comma-separated scopes
+    
+    # Metadata
+    connected_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_used_at = Column(DateTime(timezone=True))
+    is_active = Column(Boolean, default=True)
+    
+    # Relationship
+    user = relationship("User", backref="github_connection")
+    
+    def __repr__(self):
+        return f"<GitHubConnection {self.github_username}>"

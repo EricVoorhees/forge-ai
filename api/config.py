@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     stripe_price_enterprise: str = ""
     stripe_price_metered: str = ""  # Pay-as-you-go metered billing
     
+    # GitHub OAuth
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    github_redirect_uri: str = "https://forge-api-a7pi.onrender.com/v1/github/callback"
+    
     # Inference (Fireworks.ai)
     inference_url: str = "https://api.fireworks.ai/inference/v1"
     inference_timeout: float = 300.0

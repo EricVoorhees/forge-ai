@@ -21,6 +21,7 @@ from routes.usage import router as usage_router
 from routes.api_keys import router as api_keys_router
 from routes.health import router as health_router
 from routes.audit import router as audit_router
+from routes.github import router as github_router
 from auth.routes import router as auth_router
 from billing.routes import router as billing_router
 from billing.webhooks import router as webhooks_router
@@ -93,6 +94,7 @@ app.include_router(models_router)
 app.include_router(usage_router)
 app.include_router(api_keys_router)
 app.include_router(audit_router)
+app.include_router(github_router)
 app.include_router(billing_router)
 app.include_router(webhooks_router)
 
