@@ -55,7 +55,7 @@ const client = new OpenAI({
                 <pre className="p-4 font-mono text-sm overflow-x-auto">
                   <code className="text-[#a1a1aa]">
 {`const response = await client.chat.completions.create({
-  model: 'forge-1',
+  model: 'forge-coder',
   messages: [
     { role: 'system', content: 'You are a helpful assistant.' },
     { role: 'user', content: 'Hello!' }
@@ -76,7 +76,7 @@ console.log(response.choices[0].message.content);`}
                 <pre className="p-4 font-mono text-sm overflow-x-auto">
                   <code className="text-[#a1a1aa]">
 {`const stream = await client.chat.completions.create({
-  model: 'forge-1',
+  model: 'forge-coder',
   messages: [{ role: 'user', content: 'Write a story' }],
   stream: true
 });
@@ -106,7 +106,7 @@ const messages: ChatCompletionMessageParam[] = [
 ];
 
 const response = await client.chat.completions.create({
-  model: 'forge-1',
+  model: 'forge-coder',
   messages
 });`}
                   </code>
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
   
   const stream = await client.chat.completions.create({
-    model: 'forge-1',
+    model: 'forge-coder',
     messages,
     stream: true
   });

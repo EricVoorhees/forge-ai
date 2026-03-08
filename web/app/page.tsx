@@ -267,7 +267,7 @@ function ModelShowcase() {
           <div className="flex items-center gap-3">
             <Image src="/forge-logo.png" alt="FORGE" width={24} height={24} />
             <div>
-              <span className="text-white font-medium">FORGE 1</span>
+              <span className="text-white font-medium">Forge Coder</span>
               <span className="text-white/50 text-sm ml-2">671B MoE</span>
             </div>
           </div>
@@ -290,12 +290,12 @@ function ModelShowcase() {
           </div>
           <div className="w-px h-4 bg-white/10" />
           <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">$1.00</span>
+            <span className="text-white font-medium tabular-nums">$0.98</span>
             <span className="text-white/50">/ 1M in</span>
           </div>
           <div className="w-px h-4 bg-white/10" />
           <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">$1.50</span>
+            <span className="text-white font-medium tabular-nums">$1.87</span>
             <span className="text-white/50">/ 1M out</span>
           </div>
         </div>
@@ -531,7 +531,7 @@ export default function Home() {
                 </h2>
                 
                 <p className="text-white/70 mb-6 leading-relaxed">
-                  Detect vulnerabilities, exposed secrets, and code quality issues before they reach production. Powered by FORGE 1 with support for 10+ languages.
+                  Detect vulnerabilities, exposed secrets, and code quality issues before they reach production. Powered by Forge Coder with support for 10+ languages.
                 </p>
                 
                 <div className="flex flex-wrap gap-2 mb-8">

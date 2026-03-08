@@ -82,7 +82,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="forge-1",
+    model="forge-coder",
     messages=[
         {"role": "user", "content": "Write a Python function to reverse a string"}
     ]

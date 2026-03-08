@@ -55,7 +55,7 @@ export default function AuditDocsPage() {
         {/* Overview */}
         <h2 className="text-2xl font-semibold text-white mb-4">Overview</h2>
         <p className="text-[#a1a1aa] mb-6 leading-relaxed">
-          Forge Audit uses the FORGE 1 model to perform deep semantic analysis of your code, identifying security vulnerabilities that traditional static analysis tools miss. It understands context, data flow, and business logic to provide accurate, actionable results.
+          Forge Audit uses the Forge Coder model to perform deep semantic analysis of your code, identifying security vulnerabilities that traditional static analysis tools miss. It understands context, data flow, and business logic to provide accurate, actionable results.
         </p>
 
         <h3 className="text-xl font-semibold text-white mb-3">Key Features</h3>
@@ -82,7 +82,7 @@ export default function AuditDocsPage() {
         <div className="space-y-6 mb-8">
           {[
             { step: "1", title: "Submit Code", desc: "Paste code, upload files, connect a GitHub repo, or integrate with your CI/CD pipeline." },
-            { step: "2", title: "AI Analysis", desc: "FORGE 1 parses your code, builds an AST, and performs semantic analysis to understand context and data flow." },
+            { step: "2", title: "AI Analysis", desc: "Forge Coder parses your code, builds an AST, and performs semantic analysis to understand context and data flow." },
             { step: "3", title: "Pattern Matching", desc: "The model checks against 50+ vulnerability patterns, secret formats, and code quality rules." },
             { step: "4", title: "Results & Remediation", desc: "Get detailed findings with severity levels, affected files/lines, and actionable fix suggestions." },
           ].map((item) => (

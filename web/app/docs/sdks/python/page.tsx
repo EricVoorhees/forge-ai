@@ -58,7 +58,7 @@ client = OpenAI(
                 <pre className="p-4 font-mono text-sm overflow-x-auto">
                   <code className="text-[#a1a1aa]">
 {`response = client.chat.completions.create(
-    model="forge-1",
+    model="forge-coder",
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Hello!"}
@@ -79,7 +79,7 @@ print(response.choices[0].message.content)`}
                 <pre className="p-4 font-mono text-sm overflow-x-auto">
                   <code className="text-[#a1a1aa]">
 {`stream = client.chat.completions.create(
-    model="forge-1",
+    model="forge-coder",
     messages=[{"role": "user", "content": "Write a story"}],
     stream=True
 )
@@ -108,7 +108,7 @@ client = AsyncOpenAI(
 
 async def main():
     response = await client.chat.completions.create(
-        model="forge-1",
+        model="forge-coder",
         messages=[{"role": "user", "content": "Hello!"}]
     )
     print(response.choices[0].message.content)

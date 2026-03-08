@@ -56,6 +56,77 @@ function NavDropdown({ label, items }: { label: string; items: NavItem[] }) {
   );
 }
 
+// Models Dropdown with nested sub-menus for each model
+function ModelsDropdown() {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const models = [
+    {
+      name: "Forge Coder",
+      desc: "Premium 671B coding model",
+      color: "orange",
+      links: [
+        { title: "Architecture", href: "/research/model", desc: "Model design and specifications" },
+        { title: "Benchmarks", href: "/research/benchmarks", desc: "Performance comparisons" },
+      ]
+    },
+    {
+      name: "Forge Mini",
+      desc: "Fast, affordable 120B model",
+      color: "emerald",
+      links: [
+        { title: "Architecture", href: "/research/mini", desc: "Model design and specifications" },
+        { title: "Benchmarks", href: "/research/mini/benchmarks", desc: "Performance comparisons" },
+      ]
+    },
+  ];
+  
+  return (
+    <div 
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button className="flex items-center gap-1 text-[#a1a1aa] text-sm hover:text-white transition-colors py-2">
+        Models
+        <svg className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute top-full left-0 pt-3 z-50">
+          <div className="bg-[#141416] border border-white/10 rounded-2xl p-4 min-w-[380px] shadow-2xl">
+            <div className="space-y-4">
+              {models.map((model) => (
+                <div key={model.name} className="space-y-2">
+                  <div className="flex items-center gap-2 px-2">
+                    <div className={`w-2 h-2 rounded-full ${model.color === 'orange' ? 'bg-orange-500' : 'bg-emerald-500'}`} />
+                    <span className="text-white text-sm font-medium">{model.name}</span>
+                    <span className="text-white/40 text-xs">{model.desc}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {model.links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+                      >
+                        <div className="text-white/80 text-sm font-medium group-hover:text-white">{link.title}</div>
+                        <div className="text-white/40 text-xs">{link.desc}</div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Mobile Menu Component
 function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   if (!isOpen) return null;
@@ -121,28 +192,66 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             </div>
           </div>
           
-          {/* FORGE 1 Section */}
+          {/* Models Section */}
           <div className="mb-8">
-            <div className="text-white/40 text-xs uppercase tracking-wider mb-4 font-medium">FORGE 1</div>
-            <div className="space-y-1">
-              <Link href="/research/model" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                </div>
-                <div>
-                  <div className="text-white text-base font-medium">Architecture</div>
-                  <div className="text-white/50 text-sm">Model specifications</div>
-                </div>
-              </Link>
-              <Link href="/research/benchmarks" className="flex items-center gap-4 px-4 py-4 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
-                <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                </div>
-                <div>
-                  <div className="text-white text-base font-medium">Benchmarks</div>
-                  <div className="text-white/50 text-sm">Performance data</div>
-                </div>
-              </Link>
+            <div className="text-white/40 text-xs uppercase tracking-wider mb-4 font-medium">Models</div>
+            
+            {/* Forge Coder */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 px-4 py-2">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                <span className="text-white text-sm font-medium">Forge Coder</span>
+                <span className="text-white/40 text-xs">671B</span>
+              </div>
+              <div className="space-y-1 pl-4">
+                <Link href="/research/model" className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium">Architecture</div>
+                    <div className="text-white/50 text-xs">Model specifications</div>
+                  </div>
+                </Link>
+                <Link href="/research/benchmarks" className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium">Benchmarks</div>
+                    <div className="text-white/50 text-xs">Performance data</div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Forge Mini */}
+            <div>
+              <div className="flex items-center gap-2 px-4 py-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-white text-sm font-medium">Forge Mini</span>
+                <span className="text-white/40 text-xs">120B</span>
+              </div>
+              <div className="space-y-1 pl-4">
+                <Link href="/research/mini" className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium">Architecture</div>
+                    <div className="text-white/50 text-xs">Model specifications</div>
+                  </div>
+                </Link>
+                <Link href="/research/mini/benchmarks" className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors" onClick={onClose}>
+                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium">Benchmarks</div>
+                    <div className="text-white/50 text-xs">Performance data</div>
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
           
@@ -241,23 +350,7 @@ export default function Navbar({ hideDocs = false }: { hideDocs?: boolean }) {
                   },
                 ]} 
               />
-              <NavDropdown 
-                label="FORGE 1" 
-                items={[
-                  { 
-                    title: "Architecture", 
-                    href: "/research/model", 
-                    desc: "Deep dive into the 671B MoE model design and specifications",
-                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-                  },
-                  { 
-                    title: "Benchmarks", 
-                    href: "/research/benchmarks", 
-                    desc: "Performance comparisons across coding and reasoning tasks",
-                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                  },
-                ]} 
-              />
+              <ModelsDropdown />
               <NavDropdown 
                 label="Company" 
                 items={[

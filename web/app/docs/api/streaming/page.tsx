@@ -52,7 +52,7 @@ client = OpenAI(
 )
 
 stream = client.chat.completions.create(
-    model="forge-1",
+    model="forge-coder",
     messages=[{"role": "user", "content": "Write a haiku"}],
     stream=True
 )
@@ -82,7 +82,7 @@ const client = new OpenAI({
 });
 
 const stream = await client.chat.completions.create({
-  model: 'forge-1',
+  model: 'forge-coder',
   messages: [{ role: 'user', content: 'Write a haiku' }],
   stream: true
 });
@@ -104,11 +104,11 @@ for await (const chunk of stream) {
               <div className="bg-[#111113] border border-white/[0.06] rounded-lg overflow-hidden">
                 <pre className="p-4 font-mono text-sm overflow-x-auto">
                   <code className="text-[#a1a1aa]">
-{`data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","created":1709856000,"model":"forge-1","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+{`data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","created":1709856000,"model":"forge-coder","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","created":1709856000,"model":"forge-1","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":null}]}
+data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","created":1709856000,"model":"forge-coder","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","created":1709856000,"model":"forge-1","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+data: {"id":"chatcmpl-abc","object":"chat.completion.chunk","created":1709856000,"model":"forge-coder","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
 
 data: [DONE]`}
                   </code>

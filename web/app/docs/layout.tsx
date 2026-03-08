@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     url: "https://openframe.co/docs",
     siteName: "Open Frame",
     title: "Open Frame API Documentation",
-    description: "Complete Open Frame API documentation. Access our state-of-the-art FORGE model for code generation, reasoning, and analysis at $1.00/1M tokens.",
+    description: "Complete Open Frame API documentation. Access our state-of-the-art FORGE model for code generation, reasoning, and analysis at $0.98/1M tokens.",
     images: [
       {
         url: "https://openframe.co/og-image.png",

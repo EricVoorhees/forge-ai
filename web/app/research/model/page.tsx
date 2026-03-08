@@ -15,7 +15,7 @@ export default function ModelPage() {
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
               <Image src="/forge-logo.png" alt="FORGE" width={32} height={32} />
-              <h1 className="text-3xl font-semibold tracking-tight">FORGE 1</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">Forge Coder</h1>
             </div>
             <p className="text-[#71717a] text-lg leading-relaxed">
               A 671 billion parameter Mixture-of-Experts language model optimized for code generation, 
@@ -44,7 +44,7 @@ export default function ModelPage() {
             
             <div className="space-y-6 text-[#a1a1aa] text-sm leading-relaxed">
               <p>
-                FORGE 1 is built on the Transformer architecture with two key innovations: 
+                Forge Coder is built on the Transformer architecture with two key innovations: 
                 <strong className="text-white"> Multi-Head Latent Attention (MLA)</strong> and 
                 <strong className="text-white"> Mixture-of-Experts (MoE)</strong>.
               </p>
@@ -200,8 +200,8 @@ export default function ModelPage() {
           <section className="border-t border-white/5 pt-12">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-medium mb-2">Access FORGE 1</h2>
-                <p className="text-[#525252] text-sm">$1.00 / 1M input tokens · $1.50 / 1M output tokens</p>
+                <h2 className="text-xl font-medium mb-2">Access Forge Coder</h2>
+                <p className="text-[#525252] text-sm">$0.98 / 1M input tokens · $1.87 / 1M output tokens</p>
               </div>
               <Link 
                 href="/dashboard" 

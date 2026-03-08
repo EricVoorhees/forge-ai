@@ -47,7 +47,7 @@ export default function BenchmarksPage() {
           <div className="mb-12">
             <h1 className="text-3xl font-semibold tracking-tight mb-4">Benchmarks</h1>
             <p className="text-[#71717a] text-lg leading-relaxed max-w-[600px]">
-              FORGE 1 performance across standard evaluation benchmarks. 
+              Forge Coder performance across standard evaluation benchmarks. 
               Competitive with frontier closed-source models while using only 37B active parameters.
             </p>
           </div>

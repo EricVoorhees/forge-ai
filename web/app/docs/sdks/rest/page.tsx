@@ -55,7 +55,7 @@ export default function RestAPIPage() {
   -H "Authorization: Bearer sk-forge-..." \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "forge-1",
+    "model": "forge-coder",
     "messages": [
       {"role": "user", "content": "Hello!"}
     ]
@@ -77,7 +77,7 @@ export default function RestAPIPage() {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    model: 'forge-1',
+    model: 'forge-coder',
     messages: [{ role: 'user', content: 'Hello!' }]
   })
 });
@@ -101,7 +101,7 @@ console.log(data.choices[0].message.content);`}
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    model: 'forge-1',
+    model: 'forge-coder',
     messages: [{ role: 'user', content: 'Hello!' }],
     stream: true
   })

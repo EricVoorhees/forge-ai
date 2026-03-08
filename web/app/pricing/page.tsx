@@ -550,7 +550,7 @@ export default function PricingPage() {
               href="/research/model"
               className="px-8 py-3 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/10"
             >
-              Learn About FORGE 1
+              Explore Our Models
             </Link>
           </div>
         </div>

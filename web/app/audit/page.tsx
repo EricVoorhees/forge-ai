@@ -94,7 +94,7 @@ export default function AuditPage() {
             </h1>
             
             <p className="text-[#a1a1aa] text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-              Detect vulnerabilities, security flaws, and code quality issues before they reach production. Powered by FORGE 1.
+              Detect vulnerabilities, security flaws, and code quality issues before they reach production. Powered by Forge Coder.
             </p>
             
             <div className="flex items-center justify-center gap-4">

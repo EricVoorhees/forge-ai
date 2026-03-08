@@ -83,7 +83,7 @@ export default function DocsPage() {
           <div className="prose prose-invert max-w-none">
             <h2 className="text-white text-2xl font-semibold mb-4">Introduction</h2>
             <p className="text-[#a1a1aa] leading-relaxed mb-6">
-              The FORGE API provides programmatic access to FORGE 1, our 671 billion parameter mixture-of-experts model. The API follows OpenAI-compatible conventions, making it easy to integrate with existing tools and workflows.
+              The FORGE API provides programmatic access to our AI models including Forge Coder (671B) and Forge Mini (120B). The API follows OpenAI-compatible conventions, making it easy to integrate with existing tools and workflows.
             </p>
 
             <h3 className="text-white text-lg font-medium mt-8 mb-3">Base URL</h3>
@@ -107,7 +107,7 @@ export default function DocsPage() {
                 -H <span className="text-amber-300">"Content-Type: application/json"</span> \
               </div>
               <div className="text-[#a1a1aa] pl-4">
-                -d <span className="text-amber-300">'{`{"model": "forge-1", "messages": [{"role": "user", "content": "Hello"}]}`}'</span>
+                -d <span className="text-amber-300">'{`{"model": "forge-coder", "messages": [{"role": "user", "content": "Hello"}]}`}'</span>
               </div>
             </div>
 
@@ -124,10 +124,16 @@ export default function DocsPage() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="text-white px-4 py-3 font-mono">forge-1</td>
+                    <td className="text-white px-4 py-3 font-mono">forge-coder</td>
                     <td className="text-[#a1a1aa] px-4 py-3">128K tokens</td>
-                    <td className="text-[#a1a1aa] px-4 py-3">$1.00 / 1M</td>
-                    <td className="text-[#a1a1aa] px-4 py-3">$1.50 / 1M</td>
+                    <td className="text-[#a1a1aa] px-4 py-3">$0.98 / 1M</td>
+                    <td className="text-[#a1a1aa] px-4 py-3">$1.87 / 1M</td>
+                  </tr>
+                  <tr>
+                    <td className="text-white px-4 py-3 font-mono">forge-mini</td>
+                    <td className="text-[#a1a1aa] px-4 py-3">32K tokens</td>
+                    <td className="text-[#a1a1aa] px-4 py-3">$0.079 / 1M</td>
+                    <td className="text-[#a1a1aa] px-4 py-3">$0.37 / 1M</td>
                   </tr>
                 </tbody>
               </table>

@@ -48,7 +48,7 @@ export default function ChatAPIPage() {
                       <span className="text-red-400 ml-1">*</span>
                     </td>
                     <td className="text-[#71717a] px-4 py-3">string</td>
-                    <td className="text-[#a1a1aa] px-4 py-3">Model ID to use. Currently only <code className="bg-white/[0.06] px-1 rounded">forge-1</code></td>
+                    <td className="text-[#a1a1aa] px-4 py-3">Model ID to use. Use <code className="bg-white/[0.06] px-1 rounded">forge-coder</code> or <code className="bg-white/[0.06] px-1 rounded">forge-mini</code></td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3">
@@ -113,7 +113,7 @@ export default function ChatAPIPage() {
   -H "Authorization: Bearer sk-forge-..." \\
   -H "Content-Type: application/json" \\
   -d '{
-    "model": "forge-1",
+    "model": "forge-coder",
     "messages": [
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Hello!"}
@@ -139,7 +139,7 @@ export default function ChatAPIPage() {
   "id": "chatcmpl-abc123",
   "object": "chat.completion",
   "created": 1709856000,
-  "model": "forge-1",
+  "model": "forge-coder",
   "choices": [
     {
       "index": 0,

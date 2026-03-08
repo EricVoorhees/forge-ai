@@ -146,7 +146,7 @@ def make_request_with_retry(messages, max_retries=3):
     for attempt in range(max_retries):
         try:
             return client.chat.completions.create(
-                model="forge-1",
+                model="forge-coder",
                 messages=messages
             )
         except RateLimitError:
