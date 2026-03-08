@@ -21,12 +21,17 @@ async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  const url = `${API_URL}${endpoint}`;
+  console.log(`[API] ${method} ${url}`);
+  
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(url, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
+
+    console.log(`[API] Response: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: `HTTP ${response.status}: ${response.statusText}` }));
@@ -35,9 +40,11 @@ async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
 
     return response.json();
   } catch (err: any) {
+    console.error(`[API] Error:`, err);
     // Network errors (CORS, unreachable, etc.)
     if (err.name === "TypeError" && err.message === "Failed to fetch") {
-      throw new Error("Unable to connect to API server. Please check your connection.");
+      console.error(`[API] Network error - API_URL: ${API_URL}, endpoint: ${endpoint}`);
+      throw new Error(`Unable to connect to API server (${API_URL}). Please check your connection.`);
     }
     throw err;
   }
