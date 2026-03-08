@@ -171,67 +171,68 @@ const data = await response.json();`
 
   return (
     <div className="relative mb-32 rounded-2xl border border-white/10 overflow-hidden bg-black/50 backdrop-blur-sm">
-      <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-0">
-        {/* Left - Code */}
-        <div className="relative bg-[#0c0c0e] border-r border-white/[0.06] p-0 overflow-hidden">
+      {/* Mobile: Stack vertically, Desktop: Side by side */}
+      <div className="flex flex-col lg:grid lg:grid-cols-2">
+        {/* Code Section - Shows first on mobile */}
+        <div className="relative bg-[#0c0c0e] lg:border-r border-b lg:border-b-0 border-white/[0.06] order-2 lg:order-1">
           {/* Language tabs */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.06] bg-black/40">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between px-3 md:px-4 py-2 border-b border-white/[0.06] bg-black/40">
+            <div className="flex items-center gap-0.5 md:gap-1 overflow-x-auto">
               {[
                 { id: 'python', label: 'Python', icon: '🐍' },
-                { id: 'javascript', label: 'JavaScript', icon: 'JS' },
+                { id: 'javascript', label: 'JS', icon: 'JS' },
                 { id: 'curl', label: 'cURL', icon: '>' },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'python' | 'javascript' | 'curl')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  className={`flex items-center gap-1 px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-white/10 text-white'
                       : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                   }`}
                 >
-                  <span className="text-[10px]">{tab.icon}</span>
+                  <span className="text-[10px] hidden md:inline">{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
             </div>
-            <span className="text-white/30 text-xs font-mono">{codeExamples[activeTab].filename}</span>
+            <span className="text-white/30 text-xs font-mono hidden md:block">{codeExamples[activeTab].filename}</span>
           </div>
           {/* Code content */}
-          <div className="p-4 overflow-x-auto min-h-[280px]">
-            <pre className="text-sm leading-relaxed font-mono">
+          <div className="p-3 md:p-4 overflow-x-auto">
+            <pre className="text-xs md:text-sm leading-relaxed font-mono">
               <code className="text-white/80 whitespace-pre">{codeExamples[activeTab].code}</code>
             </pre>
           </div>
         </div>
         
-        {/* Right - Content */}
-        <div className="p-10 lg:p-12 flex flex-col justify-center">
-          <div className="flex items-center gap-2.5 mb-6">
-            <svg className="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Content Section - Shows second on mobile */}
+        <div className="p-6 md:p-10 lg:p-12 flex flex-col justify-center order-1 lg:order-2">
+          <div className="flex items-center gap-2 mb-4 md:mb-6">
+            <svg className="w-5 h-5 md:w-6 md:h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
-            <span className="text-lg font-semibold text-white tracking-tight">Simple Integration</span>
+            <span className="text-base md:text-lg font-semibold text-white tracking-tight">Simple Integration</span>
           </div>
           
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4 leading-tight">
             Start Building in Minutes
           </h2>
           
-          <p className="text-white/70 mb-6 leading-relaxed">
-            Connect to FORGE with just a few lines of code. Our REST API is designed for simplicity—get up and running in minutes, not hours.
+          <p className="text-white/70 text-sm md:text-base mb-4 md:mb-6 leading-relaxed">
+            Connect to FORGE with just a few lines of code. Our REST API is designed for simplicity.
           </p>
           
-          <div className="space-y-3 mb-8">
+          <div className="grid grid-cols-2 gap-2 md:space-y-0 md:grid-cols-1 md:gap-3 mb-6 md:mb-8">
             {[
-              "Clean REST API design",
-              "Multiple SDK options",
-              "Real-time streaming support",
-              "Comprehensive error handling"
+              "REST API",
+              "Multiple SDKs",
+              "Streaming",
+              "Error handling"
             ].map((item) => (
-              <div key={item} className="flex items-center gap-3 text-white/70 text-sm">
-                <svg className="w-4 h-4 text-orange-400/80 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <div key={item} className="flex items-center gap-2 text-white/70 text-xs md:text-sm">
+                <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-orange-400/80 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 {item}
@@ -239,12 +240,12 @@ const data = await response.json();`
             ))}
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <Link
               href="/docs"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors"
+              className="inline-flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 bg-white text-black text-sm font-medium rounded-lg hover:bg-white/90 transition-colors"
             >
-              View Documentation
+              Documentation
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -272,9 +273,7 @@ function ModelShowcase() {
         <div className="bg-gradient-to-br from-orange-500/10 via-black/60 to-black/60 backdrop-blur-sm border border-orange-500/20 rounded-2xl p-6 hover:border-orange-500/40 transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
-                <Image src="/forge-logo.png" alt="F" width={20} height={20} />
-              </div>
+              <Image src="/forge-logo.png" alt="F" width={28} height={28} />
               <div>
                 <span className="text-white font-semibold">Forge Coder</span>
                 <div className="text-orange-400/80 text-xs">Premium • 671B MoE</div>
@@ -308,9 +307,7 @@ function ModelShowcase() {
         <div className="bg-gradient-to-br from-emerald-500/10 via-black/60 to-black/60 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-6 hover:border-emerald-500/40 transition-all">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                <Image src="/forge-logo.png" alt="F" width={20} height={20} />
-              </div>
+              <Image src="/forge-logo.png" alt="F" width={28} height={28} />
               <div>
                 <span className="text-white font-semibold">Forge Mini</span>
                 <div className="text-emerald-400/80 text-xs">Fast • 120B</div>
