@@ -4,12 +4,12 @@ import Image from "next/image";
 
 export const metadata: Metadata = {
   title: {
-    default: "FORGE Audit Documentation | Open Frame",
-    template: "%s | FORGE Audit Docs | Open Frame",
+    default: "Open Frame Audit Documentation",
+    template: "%s | Open Frame Audit Docs",
   },
-  description: "Complete documentation for FORGE Audit - AI-powered code security analysis. Learn how to integrate security scanning into your CI/CD pipeline, detect 50+ vulnerability types, and secure your codebase with the FORGE 1 model.",
+  description: "Complete documentation for Open Frame Audit - AI-powered code security analysis. Learn how to integrate security scanning into your CI/CD pipeline, detect 50+ vulnerability types, and secure your codebase with our state-of-the-art FORGE model.",
   keywords: [
-    "FORGE Audit documentation",
+    "Open Frame Audit documentation",
     "code security docs",
     "vulnerability detection guide",
     "CI/CD security integration",
@@ -25,22 +25,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://openframe.co/audit-docs",
     siteName: "Open Frame",
-    title: "FORGE Audit Documentation - Security Scanning Guide",
-    description: "Complete documentation for FORGE Audit. Learn to detect vulnerabilities, integrate with CI/CD, and secure your code with AI-powered analysis.",
+    title: "Open Frame Audit Documentation",
+    description: "Complete documentation for Open Frame Audit. Learn to detect vulnerabilities, integrate with CI/CD, and secure your code with AI-powered analysis.",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "FORGE Audit Documentation by Open Frame",
+        url: "https://openframe.co/og-image.png",
+        width: 1280,
+        height: 720,
+        alt: "Open Frame Audit Documentation",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FORGE Audit Documentation | Open Frame",
-    description: "Complete guide to AI-powered code security analysis with FORGE Audit.",
-    images: ["/og-image.png"],
+    title: "Open Frame Audit Documentation",
+    description: "Complete guide to AI-powered code security analysis with Open Frame Audit.",
+    images: ["https://openframe.co/og-image.png"],
     creator: "@openframe",
   },
   alternates: {
@@ -87,7 +87,7 @@ export default function AuditDocsLayout({
             </Link>
 
             <div className="text-[#52525b] text-xs font-medium uppercase tracking-wider mb-6">
-              Forge Audit
+              Open Frame Audit
             </div>
             <nav>
               <ul className="space-y-1">
@@ -111,7 +111,7 @@ export default function AuditDocsLayout({
                 href="/audit"
                 className="flex items-center gap-2 text-orange-400 text-sm hover:text-orange-300 transition-colors"
               >
-                Open Forge Audit
+                Open Open Frame Audit
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FORGE 1 Benchmarks | Open Frame",
-  description: "Performance benchmarks for FORGE 1 across coding, mathematics, reasoning, and generation tasks. HumanEval 65.2%, MATH-500 90.2%, MMLU 87.1%. Compare against GPT-4, Claude, and other leading models.",
+  title: "Open Frame FORGE Benchmarks",
+  description: "Performance benchmarks for Open Frame's state-of-the-art FORGE model across coding, mathematics, reasoning, and generation tasks. HumanEval 65.2%, MATH-500 90.2%, MMLU 87.1%.",
   keywords: [
-    "FORGE 1 benchmarks",
+    "Open Frame benchmarks",
     "AI model benchmarks",
     "HumanEval",
     "MATH-500",
@@ -19,22 +19,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://openframe.co/research/benchmarks",
     siteName: "Open Frame",
-    title: "FORGE 1 Benchmarks - AI Model Performance",
-    description: "Performance benchmarks for FORGE 1: HumanEval 65.2%, MATH-500 90.2%, MMLU 87.1%. Compare against leading AI models.",
+    title: "Open Frame FORGE Benchmarks",
+    description: "Performance benchmarks for Open Frame's FORGE model: HumanEval 65.2%, MATH-500 90.2%, MMLU 87.1%.",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "FORGE 1 Benchmarks by Open Frame",
+        url: "https://openframe.co/og-image.png",
+        width: 1280,
+        height: 720,
+        alt: "Open Frame FORGE Benchmarks",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FORGE 1 Benchmarks | Open Frame",
-    description: "HumanEval 65.2%, MATH-500 90.2%, MMLU 87.1% - see how FORGE 1 performs.",
-    images: ["/og-image.png"],
+    title: "Open Frame FORGE Benchmarks",
+    description: "HumanEval 65.2%, MATH-500 90.2%, MMLU 87.1% - see how Open Frame's FORGE model performs.",
+    images: ["https://openframe.co/og-image.png"],
     creator: "@openframe",
   },
   alternates: {

@@ -7,11 +7,11 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Open Frame - FORGE AI API",
+    default: "Open Frame - AI API Platform",
     template: "%s | Open Frame",
   },
-  description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis. Access via API at $1.00/1M input tokens.",
-  keywords: ["AI API", "FORGE", "Open Frame", "code generation", "LLM", "AI coding", "machine learning API", "671B model"],
+  description: "Open Frame provides API access to FORGE, our state-of-the-art 671B parameter model optimized for code generation, reasoning, and analysis. Industry-leading efficiency at $1.00/1M tokens.",
+  keywords: ["Open Frame", "AI API", "FORGE model", "code generation", "LLM API", "AI platform", "efficient AI", "671B model"],
   authors: [{ name: "Open Frame" }],
   creator: "Open Frame",
   publisher: "Open Frame",
@@ -21,21 +21,21 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://openframe.co",
     siteName: "Open Frame",
-    title: "Open Frame - FORGE AI API",
-    description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis. Access via API at $1.00/1M input tokens.",
+    title: "Open Frame - AI API Platform",
+    description: "Open Frame provides API access to FORGE, our state-of-the-art 671B parameter model optimized for code generation, reasoning, and analysis. Industry-leading efficiency at $1.00/1M tokens.",
     images: [
       {
         url: "https://openframe.co/og-image.png",
         width: 1280,
         height: 720,
-        alt: "Open Frame - FORGE AI API",
+        alt: "Open Frame - AI API Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Open Frame - FORGE AI API",
-    description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis.",
+    title: "Open Frame - AI API Platform",
+    description: "Open Frame provides API access to FORGE, our state-of-the-art 671B parameter model for code generation and reasoning.",
     images: ["https://openframe.co/og-image.png"],
     creator: "@openframe",
   },

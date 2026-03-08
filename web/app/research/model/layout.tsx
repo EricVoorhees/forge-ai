@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FORGE 1 Architecture | Open Frame",
-  description: "Technical specifications for FORGE 1 - a 671B parameter Mixture-of-Experts model with 128K context window, 37B active parameters, and state-of-the-art performance in code generation and reasoning.",
+  title: "Open Frame FORGE Architecture",
+  description: "Technical specifications for Open Frame's FORGE model - a state-of-the-art 671B parameter Mixture-of-Experts model with 128K context window, 37B active parameters, optimized for code generation and reasoning.",
   keywords: [
-    "FORGE 1 architecture",
+    "Open Frame FORGE architecture",
     "671B parameters",
     "Mixture of Experts",
     "MoE model",
@@ -19,22 +19,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://openframe.co/research/model",
     siteName: "Open Frame",
-    title: "FORGE 1 Architecture - 671B Parameter MoE Model",
-    description: "Technical deep-dive into FORGE 1: 671B parameters, 128K context, Mixture-of-Experts architecture optimized for code generation.",
+    title: "Open Frame FORGE Architecture",
+    description: "Technical deep-dive into Open Frame's FORGE model: 671B parameters, 128K context, Mixture-of-Experts architecture.",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "FORGE 1 Architecture by Open Frame",
+        url: "https://openframe.co/og-image.png",
+        width: 1280,
+        height: 720,
+        alt: "Open Frame FORGE Architecture",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FORGE 1 Architecture | Open Frame",
-    description: "671B parameter Mixture-of-Experts model with 128K context window.",
-    images: ["/og-image.png"],
+    title: "Open Frame FORGE Architecture",
+    description: "Open Frame's state-of-the-art 671B parameter MoE model with 128K context.",
+    images: ["https://openframe.co/og-image.png"],
     creator: "@openframe",
   },
   alternates: {

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "FORGE REST API | Open Frame",
-    description: "Direct HTTP access to the FORGE API without SDKs.",
+    description: "Direct HTTP access to the Open Frame API without SDKs.",
     images: ["/og-image.png"],
   },
 };
