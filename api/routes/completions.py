@@ -13,10 +13,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
+from db.models import Subscription
 from auth.api_key import ApiKeyData, validate_api_key
 from services.rate_limiter import rate_limiter
 from services.inference import inference_client
 from services.usage import log_usage
+from services.pricing import calculate_cost, get_plan_rates
+from sqlalchemy import select
+from decimal import Decimal
 
 router = APIRouter(prefix="/v1", tags=["Completions"])
 
@@ -87,19 +91,21 @@ async def chat_completions(
             }
         )
     
-    # Check monthly token limit (for non-metered plans)
-    monthly_result = rate_limiter.check_monthly_limit(api_key.user_id, api_key.plan)
-    if not monthly_result.allowed:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Monthly token limit exceeded. Please upgrade your plan or wait until next billing cycle.",
-            headers={
-                "X-RateLimit-Limit": str(monthly_result.limit),
-                "X-RateLimit-Remaining": str(monthly_result.remaining),
-                "X-RateLimit-Reset": str(int(monthly_result.reset_at)),
-                "Retry-After": str(int(monthly_result.retry_after or 3600))
-            }
+    # Check credit balance for non-metered plans
+    if api_key.plan != "metered":
+        result = await db.execute(
+            select(Subscription).where(Subscription.user_id == api_key.user_id)
         )
+        subscription = result.scalar_one_or_none()
+        
+        if not subscription or subscription.credit_balance <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Insufficient credits. Please add more credits or upgrade your plan.",
+                headers={
+                    "X-Credits-Remaining": "0"
+                }
+            )
     
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
     
@@ -124,10 +130,21 @@ async def chat_completions(
     prompt_tokens = response.get("usage", {}).get("prompt_tokens", 0)
     completion_tokens = response.get("usage", {}).get("completion_tokens", 0)
     
+    # Calculate cost and deduct from credit balance
+    cost = calculate_cost(api_key.plan, prompt_tokens, completion_tokens)
+    
+    if api_key.plan != "metered":
+        result = await db.execute(
+            select(Subscription).where(Subscription.user_id == api_key.user_id)
+        )
+        subscription = result.scalar_one_or_none()
+        if subscription:
+            subscription.credit_balance = max(Decimal("0"), subscription.credit_balance - cost)
+            await db.commit()
+    
     total_tokens = prompt_tokens + completion_tokens
-    await log_usage(db, api_key.user_id, prompt_tokens, completion_tokens)
+    await log_usage(db, api_key.user_id, prompt_tokens, completion_tokens, cost=float(cost))
     rate_limiter.record_tokens(api_key.user_id, total_tokens)
-    rate_limiter.record_monthly_tokens(api_key.user_id, total_tokens)
     
     return response
 
@@ -157,10 +174,23 @@ async def stream_completion(
                     completion_tokens += 1
                 yield chunk
         finally:
-            total_tokens = prompt_tokens + completion_tokens * 4
-            await log_usage(db, api_key.user_id, prompt_tokens, completion_tokens * 4)
+            output_tokens = completion_tokens * 4
+            total_tokens = prompt_tokens + output_tokens
+            
+            # Calculate cost and deduct from credit balance
+            cost = calculate_cost(api_key.plan, prompt_tokens, output_tokens)
+            
+            if api_key.plan != "metered":
+                result = await db.execute(
+                    select(Subscription).where(Subscription.user_id == api_key.user_id)
+                )
+                subscription = result.scalar_one_or_none()
+                if subscription:
+                    subscription.credit_balance = max(Decimal("0"), subscription.credit_balance - cost)
+                    await db.commit()
+            
+            await log_usage(db, api_key.user_id, prompt_tokens, output_tokens, cost=float(cost))
             rate_limiter.record_tokens(api_key.user_id, total_tokens)
-            rate_limiter.record_monthly_tokens(api_key.user_id, total_tokens)
     
     return StreamingResponse(
         generate(),

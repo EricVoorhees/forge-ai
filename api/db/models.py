@@ -104,7 +104,7 @@ class UsageLog(Base):
 
 
 class Subscription(Base):
-    """Stripe subscription."""
+    """Stripe subscription with credit balance."""
     __tablename__ = "subscriptions"
     
     id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -113,6 +113,7 @@ class Subscription(Base):
     stripe_subscription_id = Column(String(64), unique=True)
     plan = Column(String(32), nullable=False, default="free")
     status = Column(String(32), nullable=False, default="active")
+    credit_balance = Column(Numeric(10, 4), nullable=False, default=0)  # USD balance remaining
     current_period_start = Column(DateTime(timezone=True))
     current_period_end = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -121,4 +122,4 @@ class Subscription(Base):
     user = relationship("User", back_populates="subscription")
     
     def __repr__(self):
-        return f"<Subscription {self.plan} ({self.status})>"
+        return f"<Subscription {self.plan} ({self.status}) ${self.credit_balance}>"

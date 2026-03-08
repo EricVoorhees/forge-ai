@@ -23,17 +23,20 @@ async def log_usage(
     db: AsyncSession,
     user_id: str,
     tokens_input: int,
-    tokens_output: int
+    tokens_output: int,
+    cost: float = None
 ) -> UsageLog:
     """
     Log token usage for a request.
+    Cost can be provided directly (from pricing service) or calculated from defaults.
     """
     logger.debug(f"Logging usage", extra={"user_id": user_id, "extra_data": {"tokens_input": tokens_input, "tokens_output": tokens_output}})
     
-    cost = (
-        (Decimal(tokens_input) / 1000) * INPUT_COST_PER_1K +
-        (Decimal(tokens_output) / 1000) * OUTPUT_COST_PER_1K
-    )
+    if cost is None:
+        cost = float(
+            (Decimal(tokens_input) / 1000) * INPUT_COST_PER_1K +
+            (Decimal(tokens_output) / 1000) * OUTPUT_COST_PER_1K
+        )
     
     usage_log = UsageLog(
         user_id=user_id,

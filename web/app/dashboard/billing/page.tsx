@@ -9,16 +9,16 @@ const plans = [
     id: "starter",
     name: "Starter",
     price: "$19",
-    tokens: "1M",
-    features: ["1M tokens/month", "60 requests/min", "Chat + API access", "Email support"],
+    savings: "5%",
+    features: ["$19 in credits/month", "$0.95/1M input", "$1.90/1M output", "60 req/min"],
     highlight: false,
   },
   {
     id: "pro",
     name: "Pro",
     price: "$79",
-    tokens: "10M",
-    features: ["10M tokens/month", "120 requests/min", "Chat + API access", "Priority support", "Usage analytics"],
+    savings: "12%",
+    features: ["$79 in credits/month", "$0.85/1M input", "$1.75/1M output", "120 req/min"],
     highlight: true,
     badge: "Most Popular",
   },
@@ -26,8 +26,8 @@ const plans = [
     id: "enterprise",
     name: "Enterprise",
     price: "$299",
-    tokens: "100M",
-    features: ["100M tokens/month", "500 requests/min", "Chat + API access", "Dedicated support", "SLA guarantee"],
+    savings: "20%",
+    features: ["$299 in credits/month", "$0.80/1M input", "$1.60/1M output", "500 req/min"],
     highlight: false,
   },
 ];
@@ -144,7 +144,7 @@ export default function BillingPage() {
               <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              <span className="text-white text-sm font-medium">{plan.tokens} tokens/month</span>
+              <span className="text-white text-sm font-medium">Save {plan.savings} on tokens</span>
             </div>
             <ul className="mt-6 space-y-3">
               {plan.features.map((feature) => (

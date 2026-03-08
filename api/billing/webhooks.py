@@ -7,10 +7,12 @@ from datetime import datetime
 from fastapi import APIRouter, Request, HTTPException, status
 from sqlalchemy import select
 
+from decimal import Decimal
 from db.database import get_db_context
 from db.models import Subscription
 from .stripe_service import construct_webhook_event
 from services.logging import get_logger
+from services.pricing import PLAN_RATES
 
 logger = get_logger("billing.webhooks")
 
@@ -78,7 +80,7 @@ async def stripe_webhook(request: Request):
 
 
 async def handle_checkout_completed(data: dict):
-    """Handle successful checkout."""
+    """Handle successful checkout - add credits based on plan price."""
     customer_id = data.get("customer")
     subscription_id = data.get("subscription")
     plan = data.get("metadata", {}).get("plan", "pro")
@@ -88,6 +90,10 @@ async def handle_checkout_completed(data: dict):
     if not customer_id or not subscription_id:
         logger.warning("Checkout completed but missing customer_id or subscription_id")
         return
+    
+    # Get plan price to add as credits
+    plan_rates = PLAN_RATES.get(plan, PLAN_RATES["starter"])
+    credits_to_add = plan_rates.plan_price
     
     async with get_db_context() as db:
         result = await db.execute(
@@ -99,7 +105,8 @@ async def handle_checkout_completed(data: dict):
             subscription.stripe_subscription_id = subscription_id
             subscription.plan = plan
             subscription.status = "active"
-            logger.info(f"Subscription activated", extra={"extra_data": {"user_id": str(subscription.user_id), "plan": plan}})
+            subscription.credit_balance = credits_to_add  # Set credits to plan price
+            logger.info(f"Subscription activated with ${credits_to_add} credits", extra={"extra_data": {"user_id": str(subscription.user_id), "plan": plan, "credits": float(credits_to_add)}})
         else:
             logger.warning(f"No subscription found for customer: {customer_id}")
 
@@ -179,11 +186,27 @@ async def handle_subscription_deleted(data: dict):
 
 
 async def handle_payment_succeeded(data: dict):
-    """Handle successful payment."""
+    """Handle successful payment - add credits for subscription renewals."""
     invoice_id = data.get("id")
     amount = data.get("amount_paid", 0) / 100  # Convert cents to dollars
     customer_id = data.get("customer")
-    logger.info(f"Payment succeeded", extra={"extra_data": {"invoice_id": invoice_id, "amount": amount, "customer_id": customer_id}})
+    billing_reason = data.get("billing_reason", "")
+    
+    logger.info(f"Payment succeeded", extra={"extra_data": {"invoice_id": invoice_id, "amount": amount, "customer_id": customer_id, "billing_reason": billing_reason}})
+    
+    # Only add credits for subscription renewals (not initial checkout)
+    if billing_reason == "subscription_cycle" and customer_id and amount > 0:
+        async with get_db_context() as db:
+            result = await db.execute(
+                select(Subscription).where(Subscription.stripe_customer_id == customer_id)
+            )
+            subscription = result.scalar_one_or_none()
+            
+            if subscription:
+                # Add the payment amount as credits (resets balance to plan price)
+                plan_rates = PLAN_RATES.get(subscription.plan, PLAN_RATES["starter"])
+                subscription.credit_balance = plan_rates.plan_price
+                logger.info(f"Credits renewed: ${plan_rates.plan_price}", extra={"extra_data": {"user_id": str(subscription.user_id), "credits": float(plan_rates.plan_price)}})
 
 
 async def handle_payment_failed(data: dict):

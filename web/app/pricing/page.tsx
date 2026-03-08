@@ -13,11 +13,13 @@ const PLANS = [
     description: "For individuals and small projects",
     price: 19,
     priceYearly: 190,
-    tokens: "1M",
-    tokensNum: 1000000,
+    inputRate: 0.95,
+    outputRate: 1.90,
+    savings: "5%",
     features: [
-      "1 million tokens/month",
-      "~800K words of context",
+      "$19 in credits/month",
+      "$0.95/1M input tokens",
+      "$1.90/1M output tokens",
       "60 requests/minute",
       "Chat + API access",
       "Email support",
@@ -31,11 +33,13 @@ const PLANS = [
     description: "For professionals and growing teams",
     price: 79,
     priceYearly: 790,
-    tokens: "10M",
-    tokensNum: 10000000,
+    inputRate: 0.85,
+    outputRate: 1.75,
+    savings: "12%",
     features: [
-      "10 million tokens/month",
-      "~8M words of context",
+      "$79 in credits/month",
+      "$0.85/1M input tokens",
+      "$1.75/1M output tokens",
       "120 requests/minute",
       "Chat + API access",
       "Priority support",
@@ -51,11 +55,13 @@ const PLANS = [
     description: "For large teams and organizations",
     price: 299,
     priceYearly: 2990,
-    tokens: "100M",
-    tokensNum: 100000000,
+    inputRate: 0.80,
+    outputRate: 1.60,
+    savings: "20%",
     features: [
-      "100 million tokens/month",
-      "~80M words of context",
+      "$299 in credits/month",
+      "$0.80/1M input tokens",
+      "$1.60/1M output tokens",
       "500 requests/minute",
       "Chat + API access",
       "Dedicated support",
@@ -70,7 +76,7 @@ const PLANS = [
 const API_PRICING = {
   input: 1.00,
   output: 2.00,
-  description: "Pay only for what you use with our metered API plan",
+  description: "Pay-as-you-go with no commitment. Best for variable usage.",
 };
 
 function TokenCalculator() {
@@ -233,7 +239,7 @@ export default function PricingPage() {
                     <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span className="text-white font-medium">{plan.tokens} tokens/month</span>
+                    <span className="text-white font-medium">Save {plan.savings} on tokens</span>
                   </div>
                 </div>
 
@@ -345,22 +351,34 @@ export default function PricingPage() {
               </thead>
               <tbody className="text-sm">
                 <tr className="border-b border-white/5">
-                  <td className="py-4 text-white/70">Monthly Tokens</td>
-                  <td className="py-4 text-center text-white">1M</td>
-                  <td className="py-4 text-center text-white">10M</td>
-                  <td className="py-4 text-center text-white">100M</td>
+                  <td className="py-4 text-white/70">Monthly Credits</td>
+                  <td className="py-4 text-center text-white">$19</td>
+                  <td className="py-4 text-center text-white">$79</td>
+                  <td className="py-4 text-center text-white">$299</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 text-white/70">Input Token Rate</td>
+                  <td className="py-4 text-center text-white">$0.95/1M</td>
+                  <td className="py-4 text-center text-white">$0.85/1M</td>
+                  <td className="py-4 text-center text-white">$0.80/1M</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 text-white/70">Output Token Rate</td>
+                  <td className="py-4 text-center text-white">$1.90/1M</td>
+                  <td className="py-4 text-center text-white">$1.75/1M</td>
+                  <td className="py-4 text-center text-white">$1.60/1M</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 text-white/70">Savings vs API</td>
+                  <td className="py-4 text-center text-white">5%</td>
+                  <td className="py-4 text-center text-white">12%</td>
+                  <td className="py-4 text-center text-white">20%</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-4 text-white/70">Requests/Minute</td>
                   <td className="py-4 text-center text-white">60</td>
                   <td className="py-4 text-center text-white">120</td>
                   <td className="py-4 text-center text-white">500</td>
-                </tr>
-                <tr className="border-b border-white/5">
-                  <td className="py-4 text-white/70">Tokens/Minute</td>
-                  <td className="py-4 text-center text-white">50K</td>
-                  <td className="py-4 text-center text-white">100K</td>
-                  <td className="py-4 text-center text-white">500K</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-4 text-white/70">API Access</td>
@@ -413,24 +431,24 @@ export default function PricingPage() {
 
           <div className="space-y-6">
             <FAQItem
-              question="What happens if I exceed my token limit?"
-              answer="When you reach your monthly token limit, API requests will return a 429 error until your limit resets at the start of your next billing cycle. You can upgrade your plan at any time to get more tokens."
+              question="How does credit-based billing work?"
+              answer="When you subscribe, you get your plan price as credits (e.g., $79 for Pro). Each API call deducts from your balance based on your plan's token rates. Higher plans get better rates, so your credits go further."
             />
             <FAQItem
-              question="Can I switch plans at any time?"
-              answer="Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference. When downgrading, the change takes effect at the start of your next billing cycle."
+              question="What happens when I run out of credits?"
+              answer="When your credit balance reaches zero, API requests will return a 402 error. Your credits reset to your plan amount at the start of each billing cycle, or you can upgrade to a higher plan for more credits and better rates."
             />
             <FAQItem
               question="What's the difference between input and output tokens?"
-              answer="Input tokens are the prompts, context, and messages you send to the API. Output tokens are the generated responses. A typical conversation uses roughly 1:1 to 1:3 input to output ratio depending on your use case."
+              answer="Input tokens are the prompts, context, and messages you send to the API. Output tokens are the generated responses. Output tokens cost more because they require more compute. A typical conversation uses roughly 1:1 to 1:3 input to output ratio."
             />
             <FAQItem
-              question="Do unused tokens roll over?"
-              answer="No, unused tokens do not roll over to the next month. Each billing cycle starts fresh with your full token allocation."
+              question="Do unused credits roll over?"
+              answer="No, unused credits do not roll over to the next month. Each billing cycle resets your balance to your plan amount."
             />
             <FAQItem
-              question="Is there a free trial?"
-              answer="We don't offer a free trial, but our Starter plan at $19/month is a low-risk way to try FORGE. If you're not satisfied, you can cancel anytime."
+              question="Why are plan rates better than API rates?"
+              answer="Plans reward commitment with discounted token rates. The more you commit upfront, the better your per-token pricing. Enterprise gets 20% off compared to pay-as-you-go API rates."
             />
           </div>
         </div>
