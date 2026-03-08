@@ -56,30 +56,9 @@ function NavDropdown({ label, items }: { label: string; items: NavItem[] }) {
   );
 }
 
-// Models Dropdown with nested sub-menus for each model
+// Models Dropdown - Professional design with F logo
 function ModelsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  
-  const models = [
-    {
-      name: "Forge Coder",
-      desc: "Premium 671B coding model",
-      color: "orange",
-      links: [
-        { title: "Architecture", href: "/research/model", desc: "Model design and specifications" },
-        { title: "Benchmarks", href: "/research/benchmarks", desc: "Performance comparisons" },
-      ]
-    },
-    {
-      name: "Forge Mini",
-      desc: "Fast, affordable 120B model",
-      color: "emerald",
-      links: [
-        { title: "Architecture", href: "/research/mini", desc: "Model design and specifications" },
-        { title: "Benchmarks", href: "/research/mini/benchmarks", desc: "Performance comparisons" },
-      ]
-    },
-  ];
   
   return (
     <div 
@@ -95,30 +74,68 @@ function ModelsDropdown() {
       </button>
       
       {isOpen && (
-        <div className="absolute top-full left-0 pt-3 z-50">
-          <div className="bg-[#141416] border border-white/10 rounded-2xl p-4 min-w-[380px] shadow-2xl">
-            <div className="space-y-4">
-              {models.map((model) => (
-                <div key={model.name} className="space-y-2">
-                  <div className="flex items-center gap-2 px-2">
-                    <div className={`w-2 h-2 rounded-full ${model.color === 'orange' ? 'bg-orange-500' : 'bg-emerald-500'}`} />
-                    <span className="text-white text-sm font-medium">{model.name}</span>
-                    <span className="text-white/40 text-xs">{model.desc}</span>
+        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+          <div className="bg-[#0c0c0e] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+              <span className="text-white/50 text-xs font-medium uppercase tracking-wider">Our Models</span>
+            </div>
+            
+            <div className="p-2">
+              {/* Forge Coder */}
+              <div className="mb-1">
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/20 flex items-center justify-center">
+                    <Image src="/forge-logo.png" alt="F" width={16} height={16} />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {model.links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
-                      >
-                        <div className="text-white/80 text-sm font-medium group-hover:text-white">{link.title}</div>
-                        <div className="text-white/40 text-xs">{link.desc}</div>
-                      </Link>
-                    ))}
+                  <div>
+                    <div className="text-white text-sm font-medium">Coder</div>
+                    <div className="text-white/40 text-[11px]">671B MoE · Premium</div>
                   </div>
                 </div>
-              ))}
+                <div className="flex gap-1 pl-11">
+                  <Link href="/research/model" className="px-3 py-1.5 text-white/60 text-xs hover:text-white hover:bg-white/[0.04] rounded-md transition-colors">
+                    Architecture
+                  </Link>
+                  <Link href="/research/benchmarks" className="px-3 py-1.5 text-white/60 text-xs hover:text-white hover:bg-white/[0.04] rounded-md transition-colors">
+                    Benchmarks
+                  </Link>
+                </div>
+              </div>
+              
+              {/* Divider */}
+              <div className="h-px bg-white/[0.06] mx-3 my-2" />
+              
+              {/* Forge Mini */}
+              <div>
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                    <Image src="/forge-logo.png" alt="F" width={16} height={16} />
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium">Mini</div>
+                    <div className="text-white/40 text-[11px]">120B · Fast & Affordable</div>
+                  </div>
+                </div>
+                <div className="flex gap-1 pl-11">
+                  <Link href="/research/mini" className="px-3 py-1.5 text-white/60 text-xs hover:text-white hover:bg-white/[0.04] rounded-md transition-colors">
+                    Architecture
+                  </Link>
+                  <Link href="/research/mini/benchmarks" className="px-3 py-1.5 text-white/60 text-xs hover:text-white hover:bg-white/[0.04] rounded-md transition-colors">
+                    Benchmarks
+                  </Link>
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="px-4 py-2.5 border-t border-white/[0.06] bg-white/[0.02]">
+              <Link href="/pricing" className="text-white/50 text-xs hover:text-white transition-colors flex items-center gap-1">
+                Compare pricing
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
           </div>
         </div>
