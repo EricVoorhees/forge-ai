@@ -3,8 +3,49 @@ import Link from "next/link";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Forge Audit Documentation",
-  description: "Documentation for Forge Audit - AI-powered code security analysis.",
+  title: {
+    default: "FORGE Audit Documentation | Open Frame",
+    template: "%s | FORGE Audit Docs | Open Frame",
+  },
+  description: "Complete documentation for FORGE Audit - AI-powered code security analysis. Learn how to integrate security scanning into your CI/CD pipeline, detect 50+ vulnerability types, and secure your codebase with the FORGE 1 model.",
+  keywords: [
+    "FORGE Audit documentation",
+    "code security docs",
+    "vulnerability detection guide",
+    "CI/CD security integration",
+    "GitHub Actions security",
+    "GitLab CI security",
+    "Open Frame docs",
+    "SAST documentation",
+    "security scanning tutorial",
+    "API security guide"
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://openframe.co/audit-docs",
+    siteName: "Open Frame",
+    title: "FORGE Audit Documentation - Security Scanning Guide",
+    description: "Complete documentation for FORGE Audit. Learn to detect vulnerabilities, integrate with CI/CD, and secure your code with AI-powered analysis.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "FORGE Audit Documentation by Open Frame",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FORGE Audit Documentation | Open Frame",
+    description: "Complete guide to AI-powered code security analysis with FORGE Audit.",
+    images: ["/og-image.png"],
+    creator: "@openframe",
+  },
+  alternates: {
+    canonical: "https://openframe.co/audit-docs",
+  },
 };
 
 const auditNav = [

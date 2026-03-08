@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 "use client";
 
-import { useRef, useEffect, forwardRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, wrapEffect } from '@react-three/postprocessing';
 import { Effect } from 'postprocessing';
@@ -158,18 +158,10 @@ class RetroEffectImpl extends Effect {
   }
 }
 
-const WrappedRetro = wrapEffect(RetroEffectImpl);
-
-interface RetroEffectProps {
+const RetroEffect = wrapEffect(RetroEffectImpl) as unknown as React.ComponentType<{
   colorNum: number;
   pixelSize: number;
-}
-
-const RetroEffect = forwardRef<typeof WrappedRetro, RetroEffectProps>((props, ref) => {
-  const { colorNum, pixelSize } = props;
-  return <WrappedRetro ref={ref} colorNum={colorNum} pixelSize={pixelSize} />;
-});
-RetroEffect.displayName = 'RetroEffect';
+}>;
 
 interface DitheredWavesProps {
   waveSpeed: number;

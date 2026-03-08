@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis. Access via API at $1.00/1M input tokens.",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://openframe.co/og-image.png",
         width: 1200,
         height: 630,
         alt: "Open Frame - FORGE AI API",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Open Frame - FORGE AI API",
     description: "FORGE is a 671B parameter AI model built for code generation, reasoning, and analysis.",
-    images: ["/og-image.png"],
+    images: ["https://openframe.co/og-image.png"],
     creator: "@openframe",
   },
   robots: {
