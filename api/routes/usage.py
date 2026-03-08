@@ -31,6 +31,7 @@ class UsageSummaryResponse(BaseModel):
 class RateLimitResponse(BaseModel):
     tokens_per_minute: dict
     tokens_per_day: dict
+    tokens_per_month: dict = None
 
 
 @router.get("", response_model=UsageSummaryResponse)
@@ -76,7 +77,12 @@ async def get_rate_limits(
     plan = subscription.plan if subscription else "free"
     
     usage = rate_limiter.get_usage(str(user.id), plan)
-    return RateLimitResponse(**usage)
+    monthly = rate_limiter.get_monthly_usage(str(user.id), plan)
+    return RateLimitResponse(
+        tokens_per_minute=usage["tokens_per_minute"],
+        tokens_per_day=usage["tokens_per_day"],
+        tokens_per_month=monthly
+    )
 
 
 @router.get("/recent")

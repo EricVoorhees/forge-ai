@@ -70,6 +70,8 @@ services:
         value: "placeholder"
       - key: STRIPE_PRICE_ENTERPRISE
         value: "placeholder"
+      - key: STRIPE_PRICE_METERED
+        value: "placeholder"
       # Fireworks.ai Inference - DeepSeek V3.1 671B ($0.90/1M tokens, MIT license)
       - key: INFERENCE_URL
         value: "https://api.fireworks.ai/inference/v1"

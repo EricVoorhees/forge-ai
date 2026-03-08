@@ -60,10 +60,17 @@ class RateLimitResult:
     retry_after: Optional[float] = None
 
 
+# Plan limits - NO FREE API ACCESS
+# starter: Entry level paid plan
+# pro: Professional plan  
+# enterprise: High volume plan
+# metered: Pay-as-you-go with auto-charge
 PLAN_LIMITS = {
-    "free": {"rpm": 20, "tpm": 10000, "tpd": 100000},
-    "pro": {"rpm": 120, "tpm": 100000, "tpd": 2000000},
-    "enterprise": {"rpm": 500, "tpm": 500000, "tpd": 10000000},
+    "free": {"rpm": 0, "tpm": 0, "tpd": 0, "monthly_tokens": 0},  # No API access
+    "starter": {"rpm": 60, "tpm": 50000, "tpd": 500000, "monthly_tokens": 1000000},  # 1M tokens/month
+    "pro": {"rpm": 120, "tpm": 100000, "tpd": 2000000, "monthly_tokens": 10000000},  # 10M tokens/month
+    "enterprise": {"rpm": 500, "tpm": 500000, "tpd": 10000000, "monthly_tokens": 100000000},  # 100M tokens/month
+    "metered": {"rpm": 500, "tpm": 500000, "tpd": 50000000, "monthly_tokens": None},  # Unlimited, pay per use
 }
 
 
@@ -281,6 +288,99 @@ class RateLimiter:
                 "tokens_per_minute": {"used": 0, "limit": limits["tpm"], "remaining": limits["tpm"]},
                 "tokens_per_day": {"used": 0, "limit": limits["tpd"], "remaining": limits["tpd"]}
             }
+    
+    def check_monthly_limit(self, user_id: str, plan: str, tokens: int = 0) -> RateLimitResult:
+        """
+        Check monthly token limit for subscription plans.
+        Returns whether the user can make the request.
+        """
+        limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["starter"])
+        monthly_limit = limits.get("monthly_tokens")
+        
+        # Metered plan has no monthly limit
+        if monthly_limit is None:
+            return RateLimitResult(allowed=True, remaining=999999999, limit=0, reset_at=0)
+        
+        if not self._check_redis():
+            return RateLimitResult(allowed=True, remaining=monthly_limit, limit=monthly_limit, reset_at=0)
+        
+        # Use year-month as key for monthly tracking
+        month_key = time.strftime("%Y-%m")
+        key = f"rate_limit:monthly:{user_id}:{month_key}"
+        
+        try:
+            current = redis_client.get(key)
+            current_tokens = int(current) if current else 0
+            
+            if current_tokens + tokens > monthly_limit:
+                # Calculate reset time (first of next month)
+                import calendar
+                from datetime import datetime
+                now = datetime.utcnow()
+                days_in_month = calendar.monthrange(now.year, now.month)[1]
+                reset_at = datetime(now.year, now.month, days_in_month, 23, 59, 59).timestamp() + 1
+                
+                logger.warning(f"Monthly limit exceeded", extra={
+                    "user_id": user_id, 
+                    "extra_data": {"current": current_tokens, "requested": tokens, "limit": monthly_limit, "plan": plan}
+                })
+                return RateLimitResult(
+                    allowed=False,
+                    remaining=max(0, monthly_limit - current_tokens),
+                    limit=monthly_limit,
+                    reset_at=reset_at,
+                    retry_after=reset_at - time.time()
+                )
+            
+            return RateLimitResult(
+                allowed=True,
+                remaining=monthly_limit - current_tokens - tokens,
+                limit=monthly_limit,
+                reset_at=0
+            )
+        except Exception as e:
+            logger.error(f"Monthly limit check failed: {e}", exc_info=True)
+            return RateLimitResult(allowed=True, remaining=monthly_limit, limit=monthly_limit, reset_at=0)
+    
+    def record_monthly_tokens(self, user_id: str, tokens: int):
+        """Record token usage for monthly tracking."""
+        if not self._check_redis():
+            return
+        
+        month_key = time.strftime("%Y-%m")
+        key = f"rate_limit:monthly:{user_id}:{month_key}"
+        
+        try:
+            pipe = redis_client.pipeline()
+            pipe.incrby(key, tokens)
+            pipe.expire(key, 86400 * 35)  # Keep for 35 days
+            pipe.execute()
+            logger.debug(f"Monthly tokens recorded", extra={"user_id": user_id, "extra_data": {"tokens": tokens}})
+        except Exception as e:
+            logger.error(f"Failed to record monthly tokens: {e}", exc_info=True)
+    
+    def get_monthly_usage(self, user_id: str, plan: str) -> dict:
+        """Get monthly usage stats."""
+        limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["starter"])
+        monthly_limit = limits.get("monthly_tokens")
+        
+        if not self._check_redis() or monthly_limit is None:
+            return {"used": 0, "limit": monthly_limit, "remaining": monthly_limit}
+        
+        month_key = time.strftime("%Y-%m")
+        key = f"rate_limit:monthly:{user_id}:{month_key}"
+        
+        try:
+            current = redis_client.get(key)
+            used = int(current) if current else 0
+            return {
+                "used": used,
+                "limit": monthly_limit,
+                "remaining": max(0, monthly_limit - used) if monthly_limit else None
+            }
+        except Exception as e:
+            logger.error(f"Failed to get monthly usage: {e}", exc_info=True)
+            return {"used": 0, "limit": monthly_limit, "remaining": monthly_limit}
 
 
 rate_limiter = RateLimiter()

@@ -50,10 +50,11 @@ async def create_checkout(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a Stripe Checkout session for subscription."""
-    if request.plan not in ["pro", "enterprise"]:
+    valid_plans = ["starter", "pro", "enterprise", "metered"]
+    if request.plan not in valid_plans:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid plan. Choose 'pro' or 'enterprise'"
+            detail=f"Invalid plan. Choose from: {', '.join(valid_plans)}"
         )
     
     result = await db.execute(

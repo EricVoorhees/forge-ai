@@ -131,6 +131,23 @@ async def validate_api_key(
     api_key.last_used_at = datetime.utcnow()
     
     plan = subscription.plan if subscription else "free"
+    
+    # SECURITY: Require paid subscription for API access
+    if plan == "free" or not subscription:
+        logger.warning(f"API access denied: no paid subscription", extra={"user_id": str(user.id), "extra_data": {"plan": plan}})
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API access requires a paid subscription. Please upgrade at https://openframe.co/pricing"
+        )
+    
+    # Check subscription is active
+    if subscription.status not in ("active", "trialing"):
+        logger.warning(f"API access denied: subscription not active", extra={"user_id": str(user.id), "extra_data": {"status": subscription.status}})
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Subscription is {subscription.status}. Please update your payment method."
+        )
+    
     logger.info(f"API key validated successfully", extra={"api_key_id": str(api_key.id), "user_id": str(user.id), "extra_data": {"plan": plan}})
     
     return ApiKeyData(

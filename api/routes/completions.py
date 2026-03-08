@@ -73,16 +73,31 @@ async def chat_completions(
     OpenAI-compatible chat completions endpoint.
     Supports streaming and non-streaming responses.
     """
+    # Check RPM limit
     rpm_result = rate_limiter.check_rpm(api_key.api_key_id, api_key.plan)
     if not rpm_result.allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded",
+            detail="Rate limit exceeded (requests per minute)",
             headers={
                 "X-RateLimit-Limit": str(rpm_result.limit),
                 "X-RateLimit-Remaining": str(rpm_result.remaining),
                 "X-RateLimit-Reset": str(int(rpm_result.reset_at)),
                 "Retry-After": str(int(rpm_result.retry_after or 60))
+            }
+        )
+    
+    # Check monthly token limit (for non-metered plans)
+    monthly_result = rate_limiter.check_monthly_limit(api_key.user_id, api_key.plan)
+    if not monthly_result.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Monthly token limit exceeded. Please upgrade your plan or wait until next billing cycle.",
+            headers={
+                "X-RateLimit-Limit": str(monthly_result.limit),
+                "X-RateLimit-Remaining": str(monthly_result.remaining),
+                "X-RateLimit-Reset": str(int(monthly_result.reset_at)),
+                "Retry-After": str(int(monthly_result.retry_after or 3600))
             }
         )
     
@@ -109,8 +124,10 @@ async def chat_completions(
     prompt_tokens = response.get("usage", {}).get("prompt_tokens", 0)
     completion_tokens = response.get("usage", {}).get("completion_tokens", 0)
     
+    total_tokens = prompt_tokens + completion_tokens
     await log_usage(db, api_key.user_id, prompt_tokens, completion_tokens)
-    rate_limiter.record_tokens(api_key.user_id, prompt_tokens + completion_tokens)
+    rate_limiter.record_tokens(api_key.user_id, total_tokens)
+    rate_limiter.record_monthly_tokens(api_key.user_id, total_tokens)
     
     return response
 
@@ -140,8 +157,10 @@ async def stream_completion(
                     completion_tokens += 1
                 yield chunk
         finally:
+            total_tokens = prompt_tokens + completion_tokens * 4
             await log_usage(db, api_key.user_id, prompt_tokens, completion_tokens * 4)
-            rate_limiter.record_tokens(api_key.user_id, prompt_tokens + completion_tokens * 4)
+            rate_limiter.record_tokens(api_key.user_id, total_tokens)
+            rate_limiter.record_monthly_tokens(api_key.user_id, total_tokens)
     
     return StreamingResponse(
         generate(),

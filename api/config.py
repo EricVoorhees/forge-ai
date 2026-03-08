@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     stripe_price_starter: str = ""
     stripe_price_pro: str = ""
     stripe_price_enterprise: str = ""
+    stripe_price_metered: str = ""  # Pay-as-you-go metered billing
     
     # Inference (Fireworks.ai)
     inference_url: str = "https://api.fireworks.ai/inference/v1"

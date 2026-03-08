@@ -10,9 +10,13 @@ from config import settings
 
 stripe.api_key = settings.stripe_secret_key
 
+# Map plan names to Stripe Price IDs
+# These need to be set in Render environment variables
 PLAN_PRICE_MAP = {
+    "starter": settings.stripe_price_starter,
     "pro": settings.stripe_price_pro,
     "enterprise": settings.stripe_price_enterprise,
+    "metered": settings.stripe_price_metered if hasattr(settings, 'stripe_price_metered') else None,
 }
 
 
