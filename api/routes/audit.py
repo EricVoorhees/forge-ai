@@ -1162,7 +1162,7 @@ async def scan_github_repo(
             gh_connection.access_token,
             request.owner,
             request.repo,
-            request.branch
+            request.branch or "main"
         )
         
         # Filter to code files only
@@ -1170,8 +1170,9 @@ async def scan_github_repo(
             '.py', '.js', '.ts', '.jsx', '.tsx', '.go', '.rs', '.java',
             '.rb', '.php', '.sol', '.yaml', '.yml', '.json', '.sh'
         }
+        # tree is already a list, not a dict
         code_files = [
-            f for f in tree.get("tree", [])
+            f for f in tree
             if f.get("type") == "blob" and 
             any(f.get("path", "").endswith(ext) for ext in code_extensions) and
             f.get("size", 0) < 100000  # Skip files > 100KB
@@ -1195,12 +1196,12 @@ async def scan_github_repo(
         
         for file_info in code_files:
             try:
-                content = await github_oauth.get_file_contents(
+                content = await github_oauth.get_file_content(
                     gh_connection.access_token,
                     request.owner,
                     request.repo,
                     file_info["path"],
-                    request.branch
+                    request.branch or "main"
                 )
                 if content:
                     files_content[file_info["path"]] = content
