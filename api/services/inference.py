@@ -34,6 +34,7 @@ class InferenceClient:
     @property
     def client(self) -> httpx.AsyncClient:
         if self._client is None:
+            logger.info(f"Creating httpx client", extra={"extra_data": {"base_url": self.base_url, "api_key_prefix": self.api_key[:15] + "..." if self.api_key else "NOT SET"}})
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
                 timeout=self.timeout,
@@ -96,10 +97,12 @@ class InferenceClient:
         }
         
         try:
+            logger.info(f"Sending request to Fireworks", extra={"extra_data": {"url": f"{self.base_url}/chat/completions", "model": model}})
             response = await self.client.post(
                 "/chat/completions",
                 json=payload
             )
+            logger.info(f"Received response from Fireworks", extra={"extra_data": {"status_code": response.status_code}})
             response.raise_for_status()
             result = response.json()
             
