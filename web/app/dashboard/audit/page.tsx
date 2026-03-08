@@ -52,7 +52,7 @@ export default function ForgeAuditDashboard() {
       {/* Header with Logo */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Image src="/openframe-logo.png" alt="F" width={28} height={28} className="rounded" />
+          <Image src="/forge-logo.png" alt="F" width={28} height={28} className="rounded" />
           <h1 className="text-xl font-semibold text-white">Audit</h1>
         </div>
         <Link 

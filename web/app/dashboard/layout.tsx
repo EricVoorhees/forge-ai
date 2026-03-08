@@ -45,7 +45,7 @@ export default function DashboardLayout({
                   : "text-[#71717a] hover:text-white hover:bg-[#18181b]/50"
               }`}
             >
-              {item.hasLogo && <Image src="/openframe-logo.png" alt="F" width={16} height={16} className="rounded" />}
+              {item.hasLogo && <Image src="/forge-logo.png" alt="F" width={16} height={16} className="rounded" />}
               {item.hasLogo ? "Audit" : item.label}
             </Link>
           ))}
@@ -82,7 +82,7 @@ export default function DashboardLayout({
             className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] hover:bg-[#252525] border border-white/10 rounded-full text-white text-sm font-medium transition-all group"
           >
             <span className="text-white/50">Go to</span>
-            <Image src="/openframe-logo.png" alt="F" width={16} height={16} className="rounded" />
+            <Image src="/forge-logo.png" alt="F" width={16} height={16} className="rounded" />
             <span className="font-medium">Chat</span>
             <svg className="w-3.5 h-3.5 text-white/50 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17L17 7M17 7H7M17 7v10" />

@@ -81,7 +81,7 @@ export default function AuditPage() {
             {/* Logo + Brand */}
             <div className="flex items-center justify-center gap-3 mb-8">
               <div className="relative">
-                <Image src="/openframe-logo.png" alt="F" width={48} height={48} className="relative z-10" />
+                <Image src="/forge-logo.png" alt="F" width={48} height={48} className="relative z-10" />
                 <div className="absolute inset-0 bg-orange-500/30 blur-xl" />
               </div>
               <span className="text-3xl font-semibold tracking-tight">Audit</span>
@@ -304,7 +304,7 @@ export default function AuditPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <Image src="/openframe-logo.png" alt="F" width={32} height={32} />
+              <Image src="/forge-logo.png" alt="F" width={32} height={32} />
               <span className="text-2xl font-semibold">Audit</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Try It Now</h2>
@@ -536,7 +536,7 @@ export default function AuditPage() {
       <section className="py-24 border-t border-white/[0.06]">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <Image src="/openframe-logo.png" alt="F" width={40} height={40} />
+            <Image src="/forge-logo.png" alt="F" width={40} height={40} />
             <span className="text-2xl font-semibold">Audit</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Secure Your Code?</h2>
