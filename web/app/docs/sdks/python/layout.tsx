@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE Python SDK - Official Client Library",
     description: "Install and use the official Python SDK for the FORGE API. Async support, type hints, and OpenAI compatibility.",
     url: "https://openframe.co/docs/sdks/python",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Python SDK" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Python SDK" }],
   },
   twitter: {
     card: "summary_large_image",

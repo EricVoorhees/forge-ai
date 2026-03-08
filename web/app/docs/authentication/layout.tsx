@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     title: "FORGE API Authentication - Secure Your Requests",
     description: "Generate API keys, configure authorization headers, and implement secure authentication with the FORGE API.",
     url: "https://openframe.co/docs/authentication",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE API Authentication" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE API Authentication" }],
   },
   twitter: {
     card: "summary_large_image",

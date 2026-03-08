@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE Streaming API - Real-Time Responses",
     description: "Implement streaming responses with server-sent events. Build low-latency AI applications with FORGE.",
     url: "https://openframe.co/docs/api/streaming",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Streaming API" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Streaming API" }],
   },
   twitter: {
     card: "summary_large_image",

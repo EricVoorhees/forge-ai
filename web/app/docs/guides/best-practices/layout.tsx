@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE API Best Practices - Build Better AI Apps",
     description: "Optimize performance, reduce costs, and build production-ready AI applications with FORGE.",
     url: "https://openframe.co/docs/guides/best-practices",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE API Best Practices" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE API Best Practices" }],
   },
   twitter: {
     card: "summary_large_image",

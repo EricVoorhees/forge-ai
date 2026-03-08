@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: "FORGE Audit CI/CD Integration - Automated Security Scanning",
     description: "Add automated security scanning to your CI/CD pipeline. Block merges on critical vulnerabilities with GitHub Actions, GitLab CI, Jenkins, and CircleCI.",
     url: "https://openframe.co/audit-docs/cicd",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Audit CI/CD Integration" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Audit CI/CD Integration" }],
   },
   twitter: {
     card: "summary_large_image",

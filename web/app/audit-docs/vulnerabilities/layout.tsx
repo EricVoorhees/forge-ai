@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: "FORGE Audit Vulnerability Types - 50+ Security Patterns",
     description: "Detect SQL injection, XSS, CSRF, authentication flaws, exposed secrets, and 50+ other vulnerability types with AI-powered analysis.",
     url: "https://openframe.co/audit-docs/vulnerabilities",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Audit Vulnerability Detection" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Audit Vulnerability Detection" }],
   },
   twitter: {
     card: "summary_large_image",

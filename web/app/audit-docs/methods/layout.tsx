@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     title: "FORGE Audit Input Methods - Code Submission Options",
     description: "Submit code via paste, file upload, GitHub integration, or CI/CD pipeline. Multiple ways to scan your code for vulnerabilities.",
     url: "https://openframe.co/audit-docs/methods",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Audit Input Methods" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Audit Input Methods" }],
   },
   twitter: {
     card: "summary_large_image",

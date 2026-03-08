@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE Chat Completions API Reference",
     description: "Complete API reference for chat completions. Create conversations and generate code with FORGE 1.",
     url: "https://openframe.co/docs/api/chat",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Chat Completions API" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Chat Completions API" }],
   },
   twitter: {
     card: "summary_large_image",

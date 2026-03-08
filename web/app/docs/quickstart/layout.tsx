@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     title: "FORGE API Quickstart - Get Started in Minutes",
     description: "Install the SDK, configure your API key, and make your first call to FORGE 1. Complete quickstart guide for Python, Node.js, and cURL.",
     url: "https://openframe.co/docs/quickstart",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE API Quickstart Guide" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE API Quickstart Guide" }],
   },
   twitter: {
     card: "summary_large_image",

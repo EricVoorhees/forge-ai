@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE API Error Handling Guide",
     description: "Handle API errors gracefully with proper retry strategies and error code reference.",
     url: "https://openframe.co/docs/api/errors",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE API Error Handling" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE API Error Handling" }],
   },
   twitter: {
     card: "summary_large_image",

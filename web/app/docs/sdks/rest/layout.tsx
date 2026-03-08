@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE REST API - Direct HTTP Access",
     description: "Access FORGE directly via REST API. Complete HTTP endpoint reference for any language or platform.",
     url: "https://openframe.co/docs/sdks/rest",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE REST API" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE REST API" }],
   },
   twitter: {
     card: "summary_large_image",

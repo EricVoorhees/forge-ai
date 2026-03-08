@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE Prompt Engineering Guide",
     description: "Master prompt engineering for code generation and reasoning with the FORGE 1 model.",
     url: "https://openframe.co/docs/guides/prompts",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Prompt Engineering" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Prompt Engineering" }],
   },
   twitter: {
     card: "summary_large_image",

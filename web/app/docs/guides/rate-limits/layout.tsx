@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE API Rate Limits - Usage Guidelines",
     description: "Understand rate limits, implement backoff strategies, and optimize your FORGE API usage.",
     url: "https://openframe.co/docs/guides/rate-limits",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE API Rate Limits" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE API Rate Limits" }],
   },
   twitter: {
     card: "summary_large_image",

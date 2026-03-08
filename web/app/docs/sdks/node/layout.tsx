@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "FORGE Node.js SDK - Official Client Library",
     description: "Install and use the official Node.js SDK for the FORGE API. Full TypeScript support and OpenAI compatibility.",
     url: "https://openframe.co/docs/sdks/node",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "FORGE Node.js SDK" }],
+    images: [{ url: "/og-image.png", width: 1280, height: 720, alt: "FORGE Node.js SDK" }],
   },
   twitter: {
     card: "summary_large_image",
