@@ -59,7 +59,7 @@ services:
       - key: DEBUG
         value: "false"
       - key: CORS_ORIGINS
-        value: "*"
+        value: "https://openframe.co,https://www.openframe.co,https://forge-web.onrender.com"
       - key: STRIPE_SECRET_KEY
         value: "placeholder"
       - key: STRIPE_WEBHOOK_SECRET

@@ -27,14 +27,14 @@ async def liveness():
 
 @router.get("/health/config")
 async def config_check():
-    """Check if critical config is loaded (debug endpoint)."""
+    """Check if critical config is loaded (does not expose sensitive data)."""
     from config import settings
     return {
         "inference_url": settings.inference_url,
         "inference_model": settings.inference_model,
         "fireworks_api_key_set": bool(settings.fireworks_api_key),
-        "fireworks_api_key_prefix": settings.fireworks_api_key[:10] + "..." if settings.fireworks_api_key else "NOT SET",
-        "redis_url_prefix": settings.redis_url[:30] + "..." if len(settings.redis_url) > 30 else settings.redis_url
+        "redis_configured": bool(settings.redis_url and settings.redis_url != "redis://localhost:6379"),
+        "environment": settings.app_env
     }
 
 
