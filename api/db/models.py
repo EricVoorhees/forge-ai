@@ -123,3 +123,124 @@ class Subscription(Base):
     
     def __repr__(self):
         return f"<Subscription {self.plan} ({self.status}) ${self.credit_balance}>"
+
+
+# =============================================================================
+# FORGE Audit Models
+# =============================================================================
+
+class AuditScan(Base):
+    """Security audit scan job."""
+    __tablename__ = "audit_scans"
+    
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    
+    # Source info
+    source_type = Column(String(20), nullable=False)  # github, gitlab, zip, paste
+    repo_url = Column(Text)
+    branch = Column(String(255))
+    commit_sha = Column(String(40))
+    
+    # Status
+    status = Column(String(20), nullable=False, default="queued")  # queued, running, completed, failed
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    error_message = Column(Text)
+    
+    # Results summary
+    total_findings = Column(Integer, default=0)
+    critical_count = Column(Integer, default=0)
+    high_count = Column(Integer, default=0)
+    medium_count = Column(Integer, default=0)
+    low_count = Column(Integer, default=0)
+    
+    # Metadata
+    files_scanned = Column(Integer, default=0)
+    lines_of_code = Column(Integer, default=0)
+    languages = Column(Text)  # JSON string
+    
+    # Usage tracking
+    tokens_used = Column(Integer, default=0)
+    cost = Column(Numeric(10, 6), default=0)
+    
+    # Model used for analysis
+    model = Column(String(32), default="forge-coder")
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    findings = relationship("AuditFinding", back_populates="scan", cascade="all, delete-orphan")
+    dependencies = relationship("AuditDependency", back_populates="scan", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<AuditScan {self.id} ({self.status})>"
+
+
+class AuditFinding(Base):
+    """Individual security finding from an audit scan."""
+    __tablename__ = "audit_findings"
+    
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    scan_id = Column(UUID(), ForeignKey("audit_scans.id", ondelete="CASCADE"), nullable=False)
+    
+    # Finding details
+    finding_type = Column(String(50), nullable=False)  # sql_injection, xss, etc.
+    severity = Column(String(20), nullable=False)  # critical, high, medium, low
+    confidence = Column(String(20), nullable=False, default="medium")  # high, medium, low
+    
+    # Location
+    file_path = Column(Text, nullable=False)
+    line_number = Column(Integer)
+    column_number = Column(Integer)
+    code_snippet = Column(Text)
+    
+    # Analysis
+    description = Column(Text, nullable=False)
+    exploit_reasoning = Column(Text)
+    suggested_fix = Column(Text)  # JSON string with { description, diff }
+    
+    # References
+    cwe_id = Column(String(20))
+    owasp_category = Column(String(50))
+    references = Column(Text)  # JSON array
+    
+    # Status
+    finding_status = Column(String(20), default="open")  # open, acknowledged, fixed, false_positive
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    scan = relationship("AuditScan", back_populates="findings")
+    
+    def __repr__(self):
+        return f"<AuditFinding {self.finding_type} ({self.severity})>"
+
+
+class AuditDependency(Base):
+    """Vulnerable dependency found during audit."""
+    __tablename__ = "audit_dependencies"
+    
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    scan_id = Column(UUID(), ForeignKey("audit_scans.id", ondelete="CASCADE"), nullable=False)
+    
+    package_name = Column(String(255), nullable=False)
+    package_version = Column(String(50))
+    ecosystem = Column(String(50))  # npm, pip, cargo, go
+    
+    # Vulnerability info
+    cve_id = Column(String(20))
+    severity = Column(String(20))
+    cvss_score = Column(Numeric(3, 1))
+    title = Column(Text)
+    description = Column(Text)
+    fixed_in = Column(String(50))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    scan = relationship("AuditScan", back_populates="dependencies")
+    
+    def __repr__(self):
+        return f"<AuditDependency {self.package_name}@{self.package_version}>"
