@@ -18,6 +18,10 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Build-time environment variables for Next.js
+ARG NEXT_PUBLIC_API_URL=https://forge-api-a7pi.onrender.com
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 RUN npm run build
 
 # Production image, copy all the files and run next
