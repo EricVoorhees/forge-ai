@@ -401,3 +401,66 @@ export async function getGitHubRepoFiles(
     total_files: number;
   }>(`/v1/github/repo/${owner}/${repo}/files${branchParam}`, { token });
 }
+
+export interface GitHubScanResult {
+  scan_id: string | null;
+  status: string;
+  repo: string;
+  branch: string;
+  files_scanned: number;
+  lines_of_code: number;
+  summary: {
+    total_findings: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  findings: Array<{
+    rule_id: string;
+    type: string;
+    severity: string;
+    confidence: string;
+    file: string;
+    line: number;
+    description: string;
+    code_snippet?: string;
+    cwe_id?: string;
+    owasp_category?: string;
+    fix?: string;
+  }>;
+}
+
+export async function scanGitHubRepo(
+  token: string,
+  owner: string,
+  repo: string,
+  options?: {
+    branch?: string;
+    ruleSets?: string[];
+    severityFilter?: string[];
+    save?: boolean;
+  }
+) {
+  return api<GitHubScanResult>("/v1/audit/github/scan", {
+    method: "POST",
+    body: {
+      owner,
+      repo,
+      branch: options?.branch,
+      rule_sets: options?.ruleSets,
+      severity_filter: options?.severityFilter,
+      save: options?.save ?? true,
+    },
+    token,
+  });
+}
+
+export async function getAuditRules(token: string) {
+  return api<{
+    rule_sets: string[];
+    total_rules: number;
+    by_severity: Record<string, number>;
+    by_language: Record<string, number>;
+  }>("/v1/audit/rules", { token });
+}

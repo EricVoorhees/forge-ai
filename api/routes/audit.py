@@ -19,7 +19,9 @@ from db.models import AuditScan, AuditFinding, AuditDependency, Subscription, Us
 from auth.api_key import ApiKeyData, validate_api_key
 from auth.dependencies import get_current_user
 from services.audit.analyzer import AuditAnalyzer, AnalysisContext, Finding
+from services.audit.analyzer_v2 import AuditAnalyzerV2, ScanOptions as V2ScanOptions
 from services.audit.reasoning import ForgeReasoningEngine
+from services.github.oauth import GitHubOAuth
 from services.pricing import calculate_cost
 from services.usage import log_usage
 
@@ -27,6 +29,8 @@ router = APIRouter(prefix="/v1/audit", tags=["Audit"])
 
 # Initialize services
 analyzer = AuditAnalyzer()
+analyzer_v2 = AuditAnalyzerV2()
+github_oauth = GitHubOAuth()
 
 
 # =============================================================================
@@ -1110,3 +1114,208 @@ async def get_report(
                 for f in findings
             ]
         }
+
+
+# =============================================================================
+# GitHub Repository Scanning
+# =============================================================================
+
+class GitHubScanRequest(BaseModel):
+    owner: str = Field(..., description="Repository owner")
+    repo: str = Field(..., description="Repository name")
+    branch: Optional[str] = Field(None, description="Branch to scan (default: repo default)")
+    rule_sets: Optional[List[str]] = Field(None, description="Rule sets to use (e.g., ['injection', 'secrets'])")
+    severity_filter: Optional[List[str]] = Field(None, description="Only include these severities")
+    save: bool = Field(True, description="Save results to dashboard")
+
+
+@router.post("/github/scan")
+async def scan_github_repo(
+    request: GitHubScanRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Scan a GitHub repository using the connected GitHub account.
+    Fetches code files and runs security analysis.
+    """
+    from db.models import GitHubConnection
+    
+    # Get user's GitHub connection
+    gh_result = await db.execute(
+        select(GitHubConnection).where(
+            GitHubConnection.user_id == user.id,
+            GitHubConnection.is_active == True
+        )
+    )
+    gh_connection = gh_result.scalar_one_or_none()
+    
+    if not gh_connection:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="GitHub not connected. Please connect your GitHub account first."
+        )
+    
+    try:
+        # Get repository tree (list of files)
+        tree = await github_oauth.get_repo_tree(
+            gh_connection.access_token,
+            request.owner,
+            request.repo,
+            request.branch
+        )
+        
+        # Filter to code files only
+        code_extensions = {
+            '.py', '.js', '.ts', '.jsx', '.tsx', '.go', '.rs', '.java',
+            '.rb', '.php', '.sol', '.yaml', '.yml', '.json', '.sh'
+        }
+        code_files = [
+            f for f in tree.get("tree", [])
+            if f.get("type") == "blob" and 
+            any(f.get("path", "").endswith(ext) for ext in code_extensions) and
+            f.get("size", 0) < 100000  # Skip files > 100KB
+        ]
+        
+        # Limit to first 50 files for performance
+        code_files = code_files[:50]
+        
+        if not code_files:
+            return {
+                "scan_id": None,
+                "status": "completed",
+                "message": "No code files found in repository",
+                "summary": {"total_findings": 0, "critical": 0, "high": 0, "medium": 0, "low": 0},
+                "findings": []
+            }
+        
+        # Fetch file contents
+        files_content = {}
+        total_lines = 0
+        
+        for file_info in code_files:
+            try:
+                content = await github_oauth.get_file_contents(
+                    gh_connection.access_token,
+                    request.owner,
+                    request.repo,
+                    file_info["path"],
+                    request.branch
+                )
+                if content:
+                    files_content[file_info["path"]] = content
+                    total_lines += len(content.split('\n'))
+            except Exception as e:
+                # Skip files that can't be fetched
+                import logging
+                logging.warning(f"Could not fetch {file_info['path']}: {e}")
+                continue
+        
+        # Run analysis with V2 analyzer
+        scan_options = V2ScanOptions(
+            rule_sets=request.rule_sets,
+            severity_filter=request.severity_filter,
+            max_findings_per_rule=20
+        )
+        
+        all_findings = analyzer_v2.analyze_files(files_content, scan_options)
+        severity_counts = analyzer_v2.get_severity_counts(all_findings)
+        
+        scan_id = None
+        
+        # Save to dashboard if requested
+        if request.save:
+            scan = AuditScan(
+                user_id=user.id,
+                source_type="github",
+                repo_url=f"https://github.com/{request.owner}/{request.repo}",
+                branch=request.branch or "default",
+                status="completed",
+                completed_at=datetime.utcnow(),
+                total_findings=len(all_findings),
+                critical_count=severity_counts.get("critical", 0),
+                high_count=severity_counts.get("high", 0),
+                medium_count=severity_counts.get("medium", 0),
+                low_count=severity_counts.get("low", 0),
+                files_scanned=len(files_content),
+                lines_of_code=total_lines,
+                languages=json.dumps(list(set(
+                    analyzer_v2.detect_language("", path) 
+                    for path in files_content.keys()
+                ))),
+            )
+            db.add(scan)
+            await db.flush()
+            
+            # Save findings
+            for f in all_findings[:100]:  # Limit stored findings
+                db_finding = AuditFinding(
+                    scan_id=scan.id,
+                    finding_type=f.finding_type,
+                    severity=f.severity,
+                    confidence=f.confidence,
+                    file_path=f.file_path,
+                    line_number=f.line_number,
+                    column_number=f.column_number,
+                    code_snippet=f.code_snippet[:2000] if f.code_snippet else None,
+                    description=f.description,
+                    cwe_id=f.cwe_id,
+                    owasp_category=f.owasp_category
+                )
+                db.add(db_finding)
+            
+            await db.commit()
+            scan_id = str(scan.id)
+        
+        # Update last_used_at for GitHub connection
+        gh_connection.last_used_at = datetime.utcnow()
+        await db.commit()
+        
+        return {
+            "scan_id": scan_id,
+            "status": "completed",
+            "repo": f"{request.owner}/{request.repo}",
+            "branch": request.branch or "default",
+            "files_scanned": len(files_content),
+            "lines_of_code": total_lines,
+            "summary": {
+                "total_findings": len(all_findings),
+                **severity_counts
+            },
+            "findings": [
+                {
+                    "rule_id": f.rule_id,
+                    "type": f.finding_type,
+                    "severity": f.severity,
+                    "confidence": f.confidence,
+                    "file": f.file_path,
+                    "line": f.line_number,
+                    "description": f.description,
+                    "code_snippet": f.code_snippet[:500] if f.code_snippet else None,
+                    "cwe_id": f.cwe_id,
+                    "owasp_category": f.owasp_category,
+                    "fix": f.suggested_fix.get("description") if f.suggested_fix else None
+                }
+                for f in all_findings[:50]  # Limit response size
+            ]
+        }
+        
+    except Exception as e:
+        import logging
+        logging.error(f"GitHub scan failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Scan failed: {str(e)}"
+        )
+
+
+@router.get("/rules")
+async def list_available_rules():
+    """List available rule sets and statistics."""
+    stats = analyzer_v2.get_rule_stats()
+    return {
+        "rule_sets": analyzer_v2.get_available_rule_sets(),
+        "total_rules": stats["total_rules"],
+        "by_severity": stats["by_severity"],
+        "by_language": stats["by_language"]
+    }

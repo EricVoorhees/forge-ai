@@ -13,8 +13,10 @@ import {
   startGitHubConnect,
   disconnectGitHub,
   getGitHubRepos,
+  scanGitHubRepo,
   GitHubRepo,
-  GitHubConnectionStatus
+  GitHubConnectionStatus,
+  GitHubScanResult
 } from "@/lib/api";
 
 type TabType = "setup" | "results";
@@ -100,6 +102,8 @@ export default function ForgeAuditDashboard() {
   const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([]);
   const [isConnectingGithub, setIsConnectingGithub] = useState(false);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  const [scanningRepo, setScanningRepo] = useState<string | null>(null);
+  const [lastScanResult, setLastScanResult] = useState<GitHubScanResult | null>(null);
 
   // Get FORGE token and load scans
   useEffect(() => {
@@ -214,6 +218,36 @@ export default function ForgeAuditDashboard() {
       setError(err.message || "Failed to load repositories");
     } finally {
       setIsLoadingRepos(false);
+    }
+  };
+
+  const handleScanRepo = async (repo: GitHubRepo) => {
+    if (!forgeToken) return;
+    
+    const [owner, repoName] = repo.full_name.split('/');
+    setScanningRepo(repo.full_name);
+    setError(null);
+    
+    try {
+      const result = await scanGitHubRepo(forgeToken, owner, repoName, {
+        branch: repo.default_branch,
+        save: true
+      });
+      setLastScanResult(result);
+      
+      // Refresh scans list and switch to results tab
+      await refreshScans();
+      setActiveTab("results");
+      
+      // If scan was saved, load its details
+      if (result.scan_id) {
+        const details = await getDashboardScan(forgeToken, result.scan_id);
+        setSelectedScan(details);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to scan repository");
+    } finally {
+      setScanningRepo(null);
     }
   };
 
@@ -470,8 +504,20 @@ export default function ForgeAuditDashboard() {
                             )}
                           </div>
                         </div>
-                        <button className="text-[10px] text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 bg-orange-500/10 rounded">
-                          Scan
+                        <button 
+                          onClick={() => handleScanRepo(repo)}
+                          disabled={scanningRepo === repo.full_name}
+                          className="text-[10px] text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 bg-orange-500/10 rounded disabled:opacity-50"
+                        >
+                          {scanningRepo === repo.full_name ? (
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Scanning...
+                            </span>
+                          ) : "Scan"}
                         </button>
                       </div>
                     ))}
