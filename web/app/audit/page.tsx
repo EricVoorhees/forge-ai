@@ -3,15 +3,25 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth, useUser } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
+import { quickAuditAnalyze, clerkSync, AuditFinding, QuickAnalyzeResult } from "@/lib/api";
 
 type InputMethod = "paste" | "upload" | "github" | "cicd";
 
 export default function AuditPage() {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const [inputMethod, setInputMethod] = useState<InputMethod>("paste");
   const [code, setCode] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Audit state
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanResult, setScanResult] = useState<QuickAnalyzeResult | null>(null);
+  const [forgeToken, setForgeToken] = useState<string | null>(null);
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -32,6 +42,68 @@ export default function AuditPage() {
 
   const scrollToTool = () => {
     document.getElementById("audit-tool")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToResults = () => {
+    document.getElementById("audit-results")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Get FORGE token when user signs in
+  useEffect(() => {
+    const syncWithForge = async () => {
+      if (isSignedIn && user && !forgeToken) {
+        try {
+          const email = user.primaryEmailAddress?.emailAddress;
+          if (!email) return;
+          
+          const result = await clerkSync(user.id, email, user.fullName || undefined);
+          setForgeToken(result.forge_token);
+        } catch (err) {
+          console.error("Failed to sync with FORGE:", err);
+        }
+      }
+    };
+    
+    syncWithForge();
+  }, [isSignedIn, user, forgeToken]);
+
+  const runAudit = async () => {
+    if (!code.trim()) return;
+    
+    setScanError(null);
+    setIsScanning(true);
+    setScanResult(null);
+    
+    try {
+      if (!forgeToken) {
+        // Try to get token if not already synced
+        if (isSignedIn && user) {
+          const email = user.primaryEmailAddress?.emailAddress;
+          if (email) {
+            const result = await clerkSync(user.id, email, user.fullName || undefined);
+            setForgeToken(result.forge_token);
+            
+            const auditResult = await quickAuditAnalyze(result.forge_token, code);
+            setScanResult(auditResult);
+            setTimeout(scrollToResults, 100);
+            return;
+          }
+        }
+        setScanError("Please sign in to run security audits");
+        setIsScanning(false);
+        return;
+      }
+      
+      const result = await quickAuditAnalyze(forgeToken, code);
+      setScanResult(result);
+      
+      // Scroll to results after a brief delay
+      setTimeout(scrollToResults, 100);
+    } catch (err: any) {
+      setScanError(err.message || "Failed to run audit");
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   // Animated counter hook
@@ -521,19 +593,132 @@ export default function AuditPage() {
           </div>
 
           {/* Run Audit Button */}
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-4">
+            {!isSignedIn && (
+              <p className="text-[#71717a] text-sm">
+                <Link href="/sign-in" className="text-orange-400 hover:text-orange-300">Sign in</Link> to run security audits
+              </p>
+            )}
             <button
-              disabled={inputMethod === "paste" && !code.trim()}
+              onClick={runAudit}
+              disabled={(inputMethod === "paste" && !code.trim()) || isScanning || !isSignedIn}
               className="flex items-center gap-3 px-8 py-4 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Run Security Audit
+              {isScanning ? (
+                <>
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Scanning...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Run Security Audit
+                </>
+              )}
             </button>
+            {scanError && (
+              <p className="text-red-400 text-sm">{scanError}</p>
+            )}
           </div>
         </div>
       </section>
+
+      {/* Results Section */}
+      {scanResult && (
+        <section id="audit-results" className="py-24 border-t border-white/[0.06]">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Scan Results</h2>
+              <p className="text-[#71717a] text-lg">
+                Found {scanResult.summary.total_findings} potential {scanResult.summary.total_findings === 1 ? 'issue' : 'issues'} in {scanResult.lines_of_code} lines of {scanResult.language || 'code'}
+              </p>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {[
+                { label: "Critical", count: scanResult.summary.critical, color: "bg-red-500" },
+                { label: "High", count: scanResult.summary.high, color: "bg-orange-500" },
+                { label: "Medium", count: scanResult.summary.medium, color: "bg-yellow-500" },
+                { label: "Low", count: scanResult.summary.low, color: "bg-blue-500" },
+              ].map((item) => (
+                <div key={item.label} className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 text-center">
+                  <div className={`w-3 h-3 rounded-full ${item.color} mx-auto mb-2`} />
+                  <div className="text-2xl font-bold text-white">{item.count}</div>
+                  <div className="text-[#71717a] text-sm">{item.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Findings List */}
+            {scanResult.findings.length > 0 ? (
+              <div className="space-y-4">
+                {scanResult.findings.map((finding, index) => (
+                  <div key={index} className="bg-[#0f0f11] border border-[#27272a] rounded-xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#27272a] bg-[#18181b]/50">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          finding.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
+                          finding.severity === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                          finding.severity === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {finding.severity.toUpperCase()}
+                        </span>
+                        <span className="text-white font-medium">{finding.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        {finding.cwe_id && (
+                          <span className="text-[#52525b] text-xs">{finding.cwe_id}</span>
+                        )}
+                      </div>
+                      <span className="text-[#52525b] text-sm">Line {finding.line}</span>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-[#a1a1aa] text-sm mb-4">{finding.description}</p>
+                      {finding.code_snippet && (
+                        <pre className="bg-[#18181b] rounded-lg p-4 text-sm font-mono text-[#e4e4e7] overflow-x-auto mb-4">
+                          {finding.code_snippet}
+                        </pre>
+                      )}
+                      {finding.exploit_reasoning && (
+                        <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4 mb-4">
+                          <div className="text-red-400 text-xs font-medium mb-2">EXPLOIT SCENARIO</div>
+                          <p className="text-[#a1a1aa] text-sm">{finding.exploit_reasoning}</p>
+                        </div>
+                      )}
+                      {finding.suggested_fix && (
+                        <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4">
+                          <div className="text-green-400 text-xs font-medium mb-2">SUGGESTED FIX</div>
+                          <p className="text-[#a1a1aa] text-sm">{finding.suggested_fix.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-[#18181b] border border-[#27272a] rounded-xl">
+                <svg className="w-16 h-16 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="text-xl font-semibold text-white mb-2">No Issues Found</h3>
+                <p className="text-[#71717a]">Your code passed all security checks</p>
+              </div>
+            )}
+
+            {/* Usage Info */}
+            {scanResult.usage && (
+              <div className="mt-8 text-center text-[#52525b] text-sm">
+                Tokens used: {scanResult.usage.tokens_used.toLocaleString()} · Cost: ${scanResult.usage.cost.toFixed(4)}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-16 md:py-24 border-t border-white/[0.06]">

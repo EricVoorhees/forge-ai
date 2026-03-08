@@ -15,8 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 
 from db.database import get_db
-from db.models import AuditScan, AuditFinding, AuditDependency, Subscription
+from db.models import AuditScan, AuditFinding, AuditDependency, Subscription, User
 from auth.api_key import ApiKeyData, validate_api_key
+from auth.dependencies import get_current_user
 from services.audit.analyzer import AuditAnalyzer, AnalysisContext, Finding
 from services.audit.reasoning import ForgeReasoningEngine
 from services.pricing import calculate_cost
@@ -554,6 +555,91 @@ async def quick_analyze(
         "usage": {
             "tokens_used": total_tokens,
             "cost": float(cost)
+        }
+    }
+
+
+@router.post("/try")
+async def try_audit(
+    request: QuickAnalyzeRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Try It Now - Quick analysis for signed-in users (no paid subscription required).
+    Limited to static analysis only (no LLM enrichment) for free users.
+    """
+    language = request.language or analyzer.detect_language(request.code)
+    
+    context = AnalysisContext(
+        code=request.code,
+        language=language,
+        file_path="input.txt",
+        context_description=request.context
+    )
+    
+    # Run static analysis
+    findings = analyzer.analyze_code(context)
+    
+    # Check if user has a subscription for LLM enrichment
+    sub_result = await db.execute(
+        select(Subscription).where(Subscription.user_id == user.id)
+    )
+    subscription = sub_result.scalar_one_or_none()
+    plan = subscription.plan if subscription and subscription.status == "active" else "free"
+    
+    total_tokens = 0
+    
+    # Only enrich with LLM if user has paid subscription
+    if plan != "free" and findings:
+        reasoning_engine = ForgeReasoningEngine(model=request.model)
+        
+        for finding in findings[:3]:  # Limit for try feature
+            enriched = await reasoning_engine.analyze_vulnerability(
+                finding=finding,
+                code_context=finding.code_snippet,
+                language=language
+            )
+            finding.exploit_reasoning = enriched.exploit_reasoning
+            finding.suggested_fix = enriched.suggested_fix
+            total_tokens += 1000
+        
+        # Deduct credits for paid users
+        if subscription:
+            cost = calculate_cost(request.model, plan, total_tokens, total_tokens // 2)
+            subscription.credit_balance = max(Decimal("0"), subscription.credit_balance - cost)
+            await log_usage(db, str(user.id), total_tokens, total_tokens // 2, cost=float(cost))
+            await db.commit()
+    
+    severity_counts = analyzer.get_severity_counts(findings)
+    
+    return {
+        "language": language,
+        "lines_of_code": analyzer.count_lines(request.code),
+        "plan": plan,
+        "summary": {
+            "total_findings": len(findings),
+            **severity_counts
+        },
+        "findings": [
+            {
+                "type": f.finding_type,
+                "severity": f.severity,
+                "confidence": f.confidence,
+                "line": f.line_number,
+                "column": f.column_number,
+                "code_snippet": f.code_snippet,
+                "description": f.description,
+                "exploit_reasoning": f.exploit_reasoning,
+                "suggested_fix": f.suggested_fix,
+                "cwe_id": f.cwe_id,
+                "owasp_category": f.owasp_category
+            }
+            for f in findings
+        ],
+        "usage": {
+            "tokens_used": total_tokens,
+            "cost": 0 if plan == "free" else float(calculate_cost(request.model, plan, total_tokens, total_tokens // 2))
         }
     }
 
