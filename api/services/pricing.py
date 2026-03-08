@@ -52,6 +52,24 @@ PLAN_PRICES = {
 }
 
 
+@dataclass
+class PlanRates:
+    """Plan-level rates including price and token rates."""
+    plan_price: Decimal
+    input_rate: Decimal
+    output_rate: Decimal
+
+
+# Legacy PLAN_RATES for backward compatibility with webhooks
+PLAN_RATES = {
+    "free": PlanRates(Decimal("0"), Decimal("0.98"), Decimal("1.87")),
+    "starter": PlanRates(Decimal("19"), Decimal("1.03"), Decimal("1.96")),
+    "pro": PlanRates(Decimal("79"), Decimal("1.00"), Decimal("1.91")),
+    "enterprise": PlanRates(Decimal("299"), Decimal("0.98"), Decimal("1.83")),
+    "metered": PlanRates(Decimal("0"), Decimal("0.98"), Decimal("1.87")),
+}
+
+
 def get_rates(model: str, plan: str) -> ModelPlanRates:
     """Get rates for a model + plan combination."""
     # Default to forge-coder if model not found
