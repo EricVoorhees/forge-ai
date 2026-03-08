@@ -76,7 +76,7 @@ class InferenceClient:
         start_time = time.time()
         
         # Use configured model - ignore placeholder model names from API requests
-        if not model or model in ("forge-coder", "forge-671b"):
+        if not model or model in ("forge-coder", "forge-671b", "forge-1"):
             model = self.model
         
         # Inject FORGE identity if no system prompt provided
@@ -134,7 +134,7 @@ class InferenceClient:
         chunk_count = 0
         
         # Use configured model - ignore placeholder model names from API requests
-        if not model or model in ("forge-coder", "forge-671b"):
+        if not model or model in ("forge-coder", "forge-671b", "forge-1"):
             model = self.model
         
         # Inject FORGE identity if no system prompt provided
