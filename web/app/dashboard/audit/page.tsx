@@ -4,7 +4,18 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { clerkSync, getDashboardScans, getDashboardScan, AuditFinding } from "@/lib/api";
+import { 
+  clerkSync, 
+  getDashboardScans, 
+  getDashboardScan, 
+  AuditFinding,
+  getGitHubStatus,
+  startGitHubConnect,
+  disconnectGitHub,
+  getGitHubRepos,
+  GitHubRepo,
+  GitHubConnectionStatus
+} from "@/lib/api";
 
 type TabType = "setup" | "results";
 
@@ -83,6 +94,12 @@ export default function ForgeAuditDashboard() {
   const [selectedScan, setSelectedScan] = useState<ScanDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // GitHub state
+  const [githubStatus, setGithubStatus] = useState<GitHubConnectionStatus | null>(null);
+  const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([]);
+  const [isConnectingGithub, setIsConnectingGithub] = useState(false);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
 
   // Get FORGE token and load scans
   useEffect(() => {
@@ -108,6 +125,20 @@ export default function ForgeAuditDashboard() {
         if (scanList.length > 0 && !selectedScan) {
           const details = await getDashboardScan(syncResult.forge_token, scanList[0].scan_id);
           setSelectedScan(details);
+        }
+        
+        // Load GitHub status
+        try {
+          const ghStatus = await getGitHubStatus(syncResult.forge_token);
+          setGithubStatus(ghStatus);
+          
+          // If connected, load repos
+          if (ghStatus.connected) {
+            const repoData = await getGitHubRepos(syncResult.forge_token);
+            setGithubRepos(repoData.repos);
+          }
+        } catch (ghErr) {
+          console.error("Failed to load GitHub status:", ghErr);
         }
       } catch (err: any) {
         console.error("Failed to load audit data:", err);
@@ -142,6 +173,47 @@ export default function ForgeAuditDashboard() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // GitHub functions
+  const handleConnectGitHub = async () => {
+    if (!forgeToken) return;
+    
+    setIsConnectingGithub(true);
+    try {
+      const result = await startGitHubConnect(forgeToken);
+      // Redirect to GitHub authorization
+      window.location.href = result.authorization_url;
+    } catch (err: any) {
+      setError(err.message || "Failed to start GitHub connection");
+      setIsConnectingGithub(false);
+    }
+  };
+
+  const handleDisconnectGitHub = async () => {
+    if (!forgeToken) return;
+    
+    try {
+      await disconnectGitHub(forgeToken);
+      setGithubStatus({ connected: false });
+      setGithubRepos([]);
+    } catch (err: any) {
+      setError(err.message || "Failed to disconnect GitHub");
+    }
+  };
+
+  const loadGitHubRepos = async () => {
+    if (!forgeToken) return;
+    
+    setIsLoadingRepos(true);
+    try {
+      const repoData = await getGitHubRepos(forgeToken);
+      setGithubRepos(repoData.repos);
+    } catch (err: any) {
+      setError(err.message || "Failed to load repositories");
+    } finally {
+      setIsLoadingRepos(false);
     }
   };
 
@@ -299,6 +371,123 @@ export default function ForgeAuditDashboard() {
                 </svg>
               </div>
             </Link>
+          </div>
+
+          {/* GitHub Connection - Full Width */}
+          <div className="col-span-2 bg-[#18181b] border border-white/5 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                </svg>
+                <div>
+                  <h3 className="text-white text-sm font-medium">GitHub Integration</h3>
+                  <p className="text-white/40 text-xs">Connect your GitHub to scan repositories directly</p>
+                </div>
+              </div>
+              
+              {githubStatus?.connected ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {githubStatus.github_avatar_url && (
+                      <img 
+                        src={githubStatus.github_avatar_url} 
+                        alt={githubStatus.github_username || "GitHub"} 
+                        className="w-6 h-6 rounded-full"
+                      />
+                    )}
+                    <span className="text-white/70 text-sm">@{githubStatus.github_username}</span>
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  </div>
+                  <button
+                    onClick={handleDisconnectGitHub}
+                    className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleConnectGitHub}
+                  disabled={isConnectingGithub}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isConnectingGithub ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                      </svg>
+                      Connect GitHub
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Repository List (when connected) */}
+            {githubStatus?.connected && (
+              <div className="border-t border-white/5 pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-white/70 text-xs font-medium uppercase tracking-wide">Your Repositories</h4>
+                  <button
+                    onClick={loadGitHubRepos}
+                    disabled={isLoadingRepos}
+                    className="text-xs text-orange-400 hover:text-orange-300 transition-colors disabled:opacity-50"
+                  >
+                    {isLoadingRepos ? "Loading..." : "Refresh"}
+                  </button>
+                </div>
+                
+                {githubRepos.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                    {githubRepos.slice(0, 10).map((repo) => (
+                      <div
+                        key={repo.id}
+                        className="flex items-center justify-between p-2 bg-[#0c0c0e] rounded-lg hover:bg-white/5 transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {repo.private ? (
+                            <svg className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3.5 h-3.5 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-white text-xs truncate">{repo.name}</p>
+                            {repo.language && (
+                              <p className="text-white/30 text-[10px]">{repo.language}</p>
+                            )}
+                          </div>
+                        </div>
+                        <button className="text-[10px] text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 bg-orange-500/10 rounded">
+                          Scan
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : isLoadingRepos ? (
+                  <div className="flex items-center justify-center py-6">
+                    <svg className="w-5 h-5 animate-spin text-white/30" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  </div>
+                ) : (
+                  <p className="text-white/30 text-xs text-center py-4">No repositories found</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : (

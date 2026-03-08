@@ -345,3 +345,59 @@ export async function listAuditScans(token: string, limit: number = 20) {
 export async function getAuditReport(token: string, scanId: string, format: string = "json") {
   return api<any>(`/v1/audit/report/${scanId}?format=${format}`, { token });
 }
+
+// GitHub Integration
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  private: boolean;
+  default_branch: string;
+  html_url: string;
+  description: string | null;
+  language: string | null;
+  updated_at: string;
+}
+
+export interface GitHubConnectionStatus {
+  connected: boolean;
+  github_username?: string;
+  github_avatar_url?: string;
+  connected_at?: string;
+  scopes?: string[];
+}
+
+export async function getGitHubStatus(token: string) {
+  return api<GitHubConnectionStatus>("/v1/github/status", { token });
+}
+
+export async function startGitHubConnect(token: string) {
+  return api<{ authorization_url: string; state: string }>("/v1/github/connect", { token });
+}
+
+export async function disconnectGitHub(token: string) {
+  return api<{ status: string }>("/v1/github/disconnect", { method: "DELETE", token });
+}
+
+export async function getGitHubRepos(token: string, page: number = 1, perPage: number = 30) {
+  return api<{ repos: GitHubRepo[]; page: number; per_page: number }>(
+    `/v1/github/repos?page=${page}&per_page=${perPage}`,
+    { token }
+  );
+}
+
+export async function getGitHubRepoFiles(
+  token: string,
+  owner: string,
+  repo: string,
+  branch?: string
+) {
+  const branchParam = branch ? `?branch=${branch}` : "";
+  return api<{
+    owner: string;
+    repo: string;
+    branch: string;
+    files: Array<{ path: string; size: number; type: string }>;
+    total_files: number;
+  }>(`/v1/github/repo/${owner}/${repo}/files${branchParam}`, { token });
+}
