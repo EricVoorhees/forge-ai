@@ -23,30 +23,32 @@ class PlanRates:
     
 
 # Plan-specific token rates
-# Higher tiers get better rates (lower cost per token)
+# API/Metered = best public rate
+# Starter/Pro = slightly worse than API (convenience premium for bundled credits)
+# Enterprise = slightly better than API on output only (volume reward)
 PLAN_RATES = {
-    # API pay-as-you-go (baseline, worst rates)
+    # API pay-as-you-go - BEST public rate
     "metered": PlanRates(
         input_rate=Decimal("1.00"),
         output_rate=Decimal("2.00"),
         plan_price=Decimal("0"),
     ),
-    # Starter: ~5% better than API
+    # Starter: slightly worse than API (~5% more expensive)
     "starter": PlanRates(
-        input_rate=Decimal("0.95"),
-        output_rate=Decimal("1.90"),
+        input_rate=Decimal("1.05"),
+        output_rate=Decimal("2.10"),
         plan_price=Decimal("19"),
     ),
-    # Pro: ~15% better than API
+    # Pro: slightly worse than API (~2% more expensive)
     "pro": PlanRates(
-        input_rate=Decimal("0.85"),
-        output_rate=Decimal("1.75"),
+        input_rate=Decimal("1.02"),
+        output_rate=Decimal("2.05"),
         plan_price=Decimal("79"),
     ),
-    # Enterprise: ~20% better than API
+    # Enterprise: best rate - 5 cents better on output only
     "enterprise": PlanRates(
-        input_rate=Decimal("0.80"),
-        output_rate=Decimal("1.60"),
+        input_rate=Decimal("1.00"),
+        output_rate=Decimal("1.95"),
         plan_price=Decimal("299"),
     ),
     # Free plan (no API access, but define rates anyway)

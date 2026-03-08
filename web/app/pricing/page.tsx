@@ -13,13 +13,13 @@ const PLANS = [
     description: "For individuals and small projects",
     price: 19,
     priceYearly: 190,
-    inputRate: 0.95,
-    outputRate: 1.90,
-    savings: "5%",
+    inputRate: 1.05,
+    outputRate: 2.10,
+    rateNote: "Bundled credits",
     features: [
       "$19 in credits/month",
-      "$0.95/1M input tokens",
-      "$1.90/1M output tokens",
+      "$1.05/1M input tokens",
+      "$2.10/1M output tokens",
       "60 requests/minute",
       "Chat + API access",
       "Email support",
@@ -33,13 +33,13 @@ const PLANS = [
     description: "For professionals and growing teams",
     price: 79,
     priceYearly: 790,
-    inputRate: 0.85,
-    outputRate: 1.75,
-    savings: "12%",
+    inputRate: 1.02,
+    outputRate: 2.05,
+    rateNote: "Near API rates",
     features: [
       "$79 in credits/month",
-      "$0.85/1M input tokens",
-      "$1.75/1M output tokens",
+      "$1.02/1M input tokens",
+      "$2.05/1M output tokens",
       "120 requests/minute",
       "Chat + API access",
       "Priority support",
@@ -55,13 +55,13 @@ const PLANS = [
     description: "For large teams and organizations",
     price: 299,
     priceYearly: 2990,
-    inputRate: 0.80,
-    outputRate: 1.60,
-    savings: "20%",
+    inputRate: 1.00,
+    outputRate: 1.95,
+    rateNote: "Best rates",
     features: [
       "$299 in credits/month",
-      "$0.80/1M input tokens",
-      "$1.60/1M output tokens",
+      "$1.00/1M input tokens",
+      "$1.95/1M output tokens",
       "500 requests/minute",
       "Chat + API access",
       "Dedicated support",
@@ -239,7 +239,7 @@ export default function PricingPage() {
                     <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span className="text-white font-medium">Save {plan.savings} on tokens</span>
+                    <span className="text-white font-medium">{plan.rateNote}</span>
                   </div>
                 </div>
 
@@ -358,21 +358,21 @@ export default function PricingPage() {
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-4 text-white/70">Input Token Rate</td>
-                  <td className="py-4 text-center text-white">$0.95/1M</td>
-                  <td className="py-4 text-center text-white">$0.85/1M</td>
-                  <td className="py-4 text-center text-white">$0.80/1M</td>
+                  <td className="py-4 text-center text-white">$1.05/1M</td>
+                  <td className="py-4 text-center text-white">$1.02/1M</td>
+                  <td className="py-4 text-center text-white">$1.00/1M</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-4 text-white/70">Output Token Rate</td>
-                  <td className="py-4 text-center text-white">$1.90/1M</td>
-                  <td className="py-4 text-center text-white">$1.75/1M</td>
-                  <td className="py-4 text-center text-white">$1.60/1M</td>
+                  <td className="py-4 text-center text-white">$2.10/1M</td>
+                  <td className="py-4 text-center text-white">$2.05/1M</td>
+                  <td className="py-4 text-center text-white">$1.95/1M</td>
                 </tr>
                 <tr className="border-b border-white/5">
-                  <td className="py-4 text-white/70">Savings vs API</td>
-                  <td className="py-4 text-center text-white">5%</td>
-                  <td className="py-4 text-center text-white">12%</td>
-                  <td className="py-4 text-center text-white">20%</td>
+                  <td className="py-4 text-white/70">vs API Pricing</td>
+                  <td className="py-4 text-center text-white/50">+5%</td>
+                  <td className="py-4 text-center text-white/50">+2%</td>
+                  <td className="py-4 text-center text-emerald-400">Best</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-4 text-white/70">Requests/Minute</td>

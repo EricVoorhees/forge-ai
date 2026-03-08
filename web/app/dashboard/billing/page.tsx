@@ -9,16 +9,16 @@ const plans = [
     id: "starter",
     name: "Starter",
     price: "$19",
-    savings: "5%",
-    features: ["$19 in credits/month", "$0.95/1M input", "$1.90/1M output", "60 req/min"],
+    rateNote: "Bundled credits",
+    features: ["$19 in credits/month", "$1.05/1M input", "$2.10/1M output", "60 req/min"],
     highlight: false,
   },
   {
     id: "pro",
     name: "Pro",
     price: "$79",
-    savings: "12%",
-    features: ["$79 in credits/month", "$0.85/1M input", "$1.75/1M output", "120 req/min"],
+    rateNote: "Near API rates",
+    features: ["$79 in credits/month", "$1.02/1M input", "$2.05/1M output", "120 req/min"],
     highlight: true,
     badge: "Most Popular",
   },
@@ -26,8 +26,8 @@ const plans = [
     id: "enterprise",
     name: "Enterprise",
     price: "$299",
-    savings: "20%",
-    features: ["$299 in credits/month", "$0.80/1M input", "$1.60/1M output", "500 req/min"],
+    rateNote: "Best rates",
+    features: ["$299 in credits/month", "$1.00/1M input", "$1.95/1M output", "500 req/min"],
     highlight: false,
   },
 ];
@@ -144,7 +144,7 @@ export default function BillingPage() {
               <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              <span className="text-white text-sm font-medium">Save {plan.savings} on tokens</span>
+              <span className="text-white text-sm font-medium">{plan.rateNote}</span>
             </div>
             <ul className="mt-6 space-y-3">
               {plan.features.map((feature) => (
