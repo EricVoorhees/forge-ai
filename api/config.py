@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # Application
     app_env: str = "development"
     debug: bool = True
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,https://openframe.co,https://www.openframe.co,https://forge-dashboard.vercel.app"
     
     class Config:
         env_file = ".env"
