@@ -16,7 +16,7 @@ export default function AuditDocsPage() {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Image src="/forge-logo.png" alt="F" width={32} height={32} />
+          <Image src="/openframe-logo.png" alt="F" width={32} height={32} />
           <h1 className="text-3xl font-bold text-white">Forge Audit</h1>
         </div>
         

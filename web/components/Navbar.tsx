@@ -67,7 +67,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <Image src="/forge-logo.png" alt="Open Frame" width={28} height={28} />
+            <Image src="/openframe-logo.png" alt="Open Frame" width={28} height={28} />
             <span className="text-lg font-semibold text-white tracking-tight">Open Frame</span>
           </div>
           <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-all">
@@ -206,7 +206,7 @@ export default function Navbar({ hideDocs = false }: { hideDocs?: boolean }) {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 mr-10">
-              <Image src="/forge-logo.png" alt="Open Frame" width={28} height={28} />
+              <Image src="/openframe-logo.png" alt="Open Frame" width={28} height={28} />
               <span className="text-lg font-semibold text-white tracking-tight">Open Frame</span>
             </Link>
             

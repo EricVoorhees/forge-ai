@@ -265,7 +265,7 @@ function ModelShowcase() {
         <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-2xl p-6 inline-block">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <Image src="/forge-logo.png" alt="FORGE" width={24} height={24} />
+            <Image src="/openframe-logo.png" alt="FORGE" width={24} height={24} />
             <div>
               <span className="text-white font-medium">FORGE 1</span>
               <span className="text-white/50 text-sm ml-2">671B MoE</span>
@@ -521,7 +521,7 @@ export default function Home() {
               {/* Left - Content */}
               <div className="p-10 lg:p-12 flex flex-col justify-center">
                 <div className="flex items-center gap-2.5 mb-6">
-                  <Image src="/forge-logo.png" alt="F" width={28} height={28} />
+                  <Image src="/openframe-logo.png" alt="F" width={28} height={28} />
                   <span className="text-xl font-semibold text-white tracking-tight">Audit</span>
                   <span className="ml-2 px-2 py-0.5 bg-orange-500/20 border border-orange-500/30 rounded text-orange-400 text-xs font-medium">New</span>
                 </div>
@@ -629,7 +629,7 @@ export default function Home() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <Image src="/forge-logo.png" alt="Open Frame" width={24} height={24} />
+                <Image src="/openframe-logo.png" alt="Open Frame" width={24} height={24} />
                 <span className="text-xl font-semibold text-white tracking-tight">Open Frame</span>
               </div>
               <p className="text-white/60 text-sm max-w-[280px] leading-relaxed">

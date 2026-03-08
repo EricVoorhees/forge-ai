@@ -101,7 +101,7 @@ export default function DocsLayout({
           {/* Logo */}
           <div className="p-6 border-b border-white/[0.06]">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/forge-logo.png" alt="Open Frame" width={24} height={24} />
+              <Image src="/openframe-logo.png" alt="Open Frame" width={24} height={24} />
               <span className="text-lg font-semibold text-white tracking-tight">Open Frame</span>
             </Link>
           </div>

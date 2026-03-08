@@ -14,7 +14,7 @@ export default function ModelPage() {
           {/* Title */}
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
-              <Image src="/forge-logo.png" alt="FORGE" width={32} height={32} />
+              <Image src="/openframe-logo.png" alt="FORGE" width={32} height={32} />
               <h1 className="text-3xl font-semibold tracking-tight">FORGE 1</h1>
             </div>
             <p className="text-[#71717a] text-lg leading-relaxed">
