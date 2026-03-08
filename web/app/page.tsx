@@ -6,7 +6,13 @@ import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 
-const Dither = dynamic(() => import("@/components/Dither"), { ssr: false });
+// Load Dither with a placeholder to prevent flash
+const Dither = dynamic(() => import("@/components/Dither"), { 
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 via-black to-black" />
+  )
+});
 
 // Animated counter hook
 function useCountUp(end: number, duration: number = 1500, decimals: number = 0, prefix: string = "", suffix: string = "") {
@@ -256,59 +262,91 @@ const data = await response.json();`
   );
 }
 
-// Model Showcase + Topics Section
+// Model Showcase - Both Models Side by Side
 function ModelShowcase() {
   return (
-    <div className="w-full max-w-[900px] mx-auto mb-32 px-6">
-      {/* Compact Model Card - Centered and tight */}
-      <div className="flex justify-center mb-10">
-        <div className="bg-black/50 backdrop-blur-sm border border-white/20 rounded-2xl p-6 inline-block">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <Image src="/forge-logo.png" alt="FORGE" width={24} height={24} />
+    <div className="w-full max-w-[1000px] mx-auto mb-32 px-6">
+      {/* Two Model Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {/* Forge Coder */}
+        <div className="bg-gradient-to-br from-orange-500/10 via-black/60 to-black/60 backdrop-blur-sm border border-orange-500/20 rounded-2xl p-6 hover:border-orange-500/40 transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
+                <Image src="/forge-logo.png" alt="F" width={20} height={20} />
+              </div>
+              <div>
+                <span className="text-white font-semibold">Forge Coder</span>
+                <div className="text-orange-400/80 text-xs">Premium • 671B MoE</div>
+              </div>
+            </div>
+            <Link href="/research/model" className="text-white/50 text-xs hover:text-white transition-colors">
+              Architecture →
+            </Link>
+          </div>
+          <div className="grid grid-cols-4 gap-3 text-center">
             <div>
-              <span className="text-white font-medium">Forge Coder</span>
-              <span className="text-white/50 text-sm ml-2">671B MoE</span>
+              <div className="text-white font-semibold tabular-nums">128K</div>
+              <div className="text-white/40 text-xs">context</div>
+            </div>
+            <div>
+              <div className="text-white font-semibold tabular-nums">37B</div>
+              <div className="text-white/40 text-xs">active</div>
+            </div>
+            <div>
+              <div className="text-white font-semibold tabular-nums">$0.98</div>
+              <div className="text-white/40 text-xs">/ 1M in</div>
+            </div>
+            <div>
+              <div className="text-white font-semibold tabular-nums">$1.87</div>
+              <div className="text-white/40 text-xs">/ 1M out</div>
             </div>
           </div>
-          <Link 
-            href="/research/model" 
-            className="text-white/60 text-xs hover:text-white transition-colors"
-          >
-            View specs →
-          </Link>
         </div>
-        <div className="flex items-center gap-6 text-sm flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">128K</span>
-            <span className="text-white/50">context</span>
+
+        {/* Forge Mini */}
+        <div className="bg-gradient-to-br from-emerald-500/10 via-black/60 to-black/60 backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-6 hover:border-emerald-500/40 transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                <Image src="/forge-logo.png" alt="F" width={20} height={20} />
+              </div>
+              <div>
+                <span className="text-white font-semibold">Forge Mini</span>
+                <div className="text-emerald-400/80 text-xs">Fast • 120B</div>
+              </div>
+            </div>
+            <Link href="/research/mini" className="text-white/50 text-xs hover:text-white transition-colors">
+              Architecture →
+            </Link>
           </div>
-          <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">37B</span>
-            <span className="text-white/50">active</span>
-          </div>
-          <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">$0.98</span>
-            <span className="text-white/50">/ 1M in</span>
-          </div>
-          <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2">
-            <span className="text-white font-medium tabular-nums">$1.87</span>
-            <span className="text-white/50">/ 1M out</span>
+          <div className="grid grid-cols-4 gap-3 text-center">
+            <div>
+              <div className="text-white font-semibold tabular-nums">32K</div>
+              <div className="text-white/40 text-xs">context</div>
+            </div>
+            <div>
+              <div className="text-white font-semibold tabular-nums">5.1B</div>
+              <div className="text-white/40 text-xs">active</div>
+            </div>
+            <div>
+              <div className="text-white font-semibold tabular-nums">$0.08</div>
+              <div className="text-white/40 text-xs">/ 1M in</div>
+            </div>
+            <div>
+              <div className="text-white font-semibold tabular-nums">$0.37</div>
+              <div className="text-white/40 text-xs">/ 1M out</div>
+            </div>
           </div>
         </div>
-      </div>
       </div>
 
-      {/* Quick Links - Professional boxed style with upward arrows */}
+      {/* Quick Links */}
       <div className="flex flex-wrap items-center justify-center gap-3">
         {[
-          { label: "Architecture", href: "/research/model" },
           { label: "Documentation", href: "/docs" },
           { label: "Pricing", href: "/pricing" },
-          { label: "Changelog", href: "/blog" },
+          { label: "Benchmarks", href: "/research/benchmarks" },
         ].map((link) => (
           <Link
             key={link.label}
@@ -360,7 +398,7 @@ export default function Home() {
               Ask FORGE, Build Faster
             </h1>
             <p className="text-white/70 text-center text-lg mb-10 max-w-[600px]">
-              FORGE-671B is built on state-of-the-art open-source foundation models, delivering GPT-4 class performance at a fraction of the cost.
+              Two powerful AI models for every use case. Premium coding with Forge Coder, or fast & affordable with Forge Mini.
             </p>
             
             {/* Chat Input */}
@@ -397,115 +435,102 @@ export default function Home() {
           <ModelShowcase />
 
           {/* Features Section */}
-          <div className="text-center w-full flex flex-col items-center mb-12">
+          <div className="text-center w-full flex flex-col items-center mb-10">
             <h2 className="text-white text-2xl md:text-3xl font-semibold mb-3 tracking-tight">
-              Product Features
+              Built for Developers
             </h2>
-            <p className="text-white/60">
-              Everything you need to build with AI
+            <p className="text-white/50 max-w-lg">
+              Both models share the same powerful capabilities, optimized for real-world coding tasks
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-32">
-            {/* Card 1: Code Generation - Featured */}
-            <div className="group relative bg-gradient-to-br from-orange-500/15 via-black/60 to-black/60 backdrop-blur-sm border border-orange-500/20 p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-orange-500/40 transition-all overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl" />
-              <div className="relative">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-3 md:mb-4">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                </div>
-                <h3 className="text-white text-sm md:text-lg font-semibold mb-1 md:mb-2">Code Generation</h3>
-                <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 hidden sm:block">Generate production-ready code across 20+ languages with context-aware completions.</p>
-                <div className="flex flex-wrap items-center gap-1 md:gap-2 text-orange-400/80 text-[10px] md:text-xs font-medium">
-                  <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-white/5 border border-white/10 rounded">20+ Languages</span>
-                </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-32">
+            {/* Feature 1 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
               </div>
+              <h3 className="text-white font-semibold mb-1">Code Generation</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Production-ready code in 20+ languages</p>
             </div>
 
-            {/* Card 2: Advanced Reasoning */}
-            <div className="group relative bg-black/50 backdrop-blur-sm border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-white/25 transition-all">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 md:mb-4">
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Feature 2 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <h3 className="text-white text-sm md:text-lg font-semibold mb-1 md:mb-2">Advanced Reasoning</h3>
-              <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 hidden sm:block">Multi-step problem solving with chain-of-thought reasoning for complex tasks.</p>
-              <div className="flex items-center gap-2 md:gap-3 text-white/50 text-[10px] md:text-xs">
-                <span>Chain-of-thought</span>
-              </div>
+              <h3 className="text-white font-semibold mb-1">Reasoning</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Chain-of-thought for complex tasks</p>
             </div>
 
-            {/* Card 3: 128K Context */}
-            <div className="group relative bg-black/50 backdrop-blur-sm border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-white/25 transition-all">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 md:mb-4">
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+            {/* Feature 3 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                 </svg>
               </div>
-              <h3 className="text-white text-sm md:text-lg font-semibold mb-1 md:mb-2">128K Context</h3>
-              <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 hidden sm:block">Process entire codebases, long documents, and maintain context across conversations.</p>
-              <div className="space-y-1.5 md:space-y-2">
-                <div className="flex justify-between text-[10px] md:text-xs text-white/50">
-                  <span>Context</span>
-                  <span className="text-white/70">128K tokens</span>
-                </div>
-                <div className="h-1 md:h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full w-full bg-gradient-to-r from-orange-500/70 to-orange-400/90 rounded-full" />
-                </div>
-              </div>
+              <h3 className="text-white font-semibold mb-1">Long Context</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Up to 128K tokens per request</p>
             </div>
 
-            {/* Card 4: Debugging & Analysis */}
-            <div className="group relative bg-black/50 backdrop-blur-sm border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-white/25 transition-all">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 md:mb-4">
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Feature 4 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-white font-semibold mb-1">Fast Streaming</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Real-time token streaming</p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-white text-sm md:text-lg font-semibold mb-1 md:mb-2">Debugging</h3>
-              <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 hidden sm:block">Identify bugs, explain errors, and suggest fixes with detailed explanations.</p>
-              <div className="flex items-center gap-2 text-white/50 text-[10px] md:text-xs">
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-orange-400 rounded-full" />
-                  Root cause analysis
-                </span>
-              </div>
+              <h3 className="text-white font-semibold mb-1">Debugging</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Root cause analysis & fixes</p>
             </div>
 
-            {/* Card 5: Code Review */}
-            <div className="group relative bg-black/50 backdrop-blur-sm border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-white/25 transition-all">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 md:mb-4">
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Feature 6 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-white font-semibold mb-1">Security Audit</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Vulnerability detection</p>
+            </div>
+
+            {/* Feature 7 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h3 className="text-white text-sm md:text-lg font-semibold mb-1 md:mb-2">Code Review</h3>
-              <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 hidden sm:block">Automated code review with security checks, best practices, and optimization suggestions.</p>
-              <div className="flex flex-wrap gap-1 md:gap-2">
-                <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-white/5 border border-white/10 rounded text-white/60 text-[10px] md:text-xs">Security</span>
-                <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-white/5 border border-white/10 rounded text-white/60 text-[10px] md:text-xs hidden sm:inline">Performance</span>
-              </div>
+              <h3 className="text-white font-semibold mb-1">Code Review</h3>
+              <p className="text-white/50 text-sm leading-relaxed">Best practices & optimization</p>
             </div>
 
-            {/* Card 6: Multi-Language */}
-            <div className="group relative bg-black/50 backdrop-blur-sm border border-white/10 p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-white/25 transition-all">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 md:mb-4">
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+            {/* Feature 8 */}
+            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.08] p-5 rounded-xl hover:border-white/20 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-white text-sm md:text-lg font-semibold mb-1 md:mb-2">Multi-Language</h3>
-              <p className="text-white/70 text-xs md:text-sm leading-relaxed mb-3 md:mb-4 hidden sm:block">Native support for Python, TypeScript, Rust, Go, and 20+ programming languages.</p>
-              <div className="flex flex-wrap gap-1 md:gap-2">
-                {["Python", "TS", "Rust"].map((lang) => (
-                  <span key={lang} className="px-1.5 md:px-2 py-0.5 md:py-1 bg-white/5 border border-white/10 rounded text-white/60 text-[10px] md:text-xs">
-                    {lang}
-                  </span>
-                ))}
-              </div>
+              <h3 className="text-white font-semibold mb-1">REST API</h3>
+              <p className="text-white/50 text-sm leading-relaxed">OpenAI-compatible endpoints</p>
             </div>
           </div>
 
