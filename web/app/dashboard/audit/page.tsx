@@ -1,10 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { clerkSync, getDashboardScans, getDashboardScan, AuditFinding } from "@/lib/api";
 
 type TabType = "setup" | "results";
+
+interface ScanSummary {
+  scan_id: string;
+  status: string;
+  source_type: string;
+  repo_url?: string;
+  created_at: string;
+  summary?: {
+    total_findings: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+}
+
+interface ScanDetails {
+  scan_id: string;
+  status: string;
+  source_type: string;
+  created_at: string;
+  completed_at?: string;
+  summary: {
+    total_findings: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    files_scanned: number;
+    lines_of_code: number;
+  };
+  findings: AuditFinding[];
+}
 
 const codeExamples = {
   cli: `# Install the CLI
@@ -23,20 +58,13 @@ jobs:
       - uses: openframe/audit-action@v1
         with:
           api-key: \${{ secrets.FORGE_API_KEY }}`,
-  api: `curl -X POST https://api.openframe.co/v1/audit \\
-  -H "Authorization: Bearer $FORGE_API_KEY" \\
+  api: `curl -X POST https://api.openframe.co/v1/audit/try \\
+  -H "Authorization: Bearer YOUR_TOKEN" \\
   -H "Content-Type: application/json" \\
-  -d '{"repo": "github.com/user/repo"}'`
+  -d '{"code": "your code here", "save": true}'`
 };
 
-const mockIssues = [
-  { id: "1", type: "SQL Injection", severity: "critical" as const, file: "auth.ts:45" },
-  { id: "2", type: "Weak Crypto", severity: "high" as const, file: "crypto.ts:23" },
-  { id: "3", type: "XSS", severity: "high" as const, file: "user.ts:89" },
-  { id: "4", type: "CORS Issue", severity: "medium" as const, file: "cors.ts:12" },
-];
-
-const severityColors = {
+const severityColors: Record<string, string> = {
   critical: "bg-red-500",
   high: "bg-orange-500",
   medium: "bg-yellow-500",
@@ -44,8 +72,103 @@ const severityColors = {
 };
 
 export default function ForgeAuditDashboard() {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<TabType>("setup");
   const [codeType, setCodeType] = useState<"cli" | "github" | "api">("cli");
+  
+  // Real data state
+  const [forgeToken, setForgeToken] = useState<string | null>(null);
+  const [scans, setScans] = useState<ScanSummary[]>([]);
+  const [selectedScan, setSelectedScan] = useState<ScanDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Get FORGE token and load scans
+  useEffect(() => {
+    const loadData = async () => {
+      if (!isSignedIn || !user) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const email = user.primaryEmailAddress?.emailAddress;
+        if (!email) return;
+        
+        // Get FORGE token
+        const syncResult = await clerkSync(user.id, email, user.fullName || undefined);
+        setForgeToken(syncResult.forge_token);
+        
+        // Load scans
+        const scanList = await getDashboardScans(syncResult.forge_token);
+        setScans(scanList);
+        
+        // Auto-select first scan if available
+        if (scanList.length > 0 && !selectedScan) {
+          const details = await getDashboardScan(syncResult.forge_token, scanList[0].scan_id);
+          setSelectedScan(details);
+        }
+      } catch (err: any) {
+        console.error("Failed to load audit data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [isSignedIn, user]);
+
+  const loadScanDetails = async (scanId: string) => {
+    if (!forgeToken) return;
+    
+    try {
+      const details = await getDashboardScan(forgeToken, scanId);
+      setSelectedScan(details);
+    } catch (err: any) {
+      console.error("Failed to load scan details:", err);
+    }
+  };
+
+  const refreshScans = async () => {
+    if (!forgeToken) return;
+    
+    setIsLoading(true);
+    try {
+      const scanList = await getDashboardScans(forgeToken);
+      setScans(scanList);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Calculate totals from selected scan or all scans
+  const totals = selectedScan?.summary || scans.reduce((acc, s) => {
+    if (s.summary) {
+      acc.total_findings += s.summary.total_findings;
+      acc.critical += s.summary.critical;
+      acc.high += s.summary.high;
+      acc.medium += s.summary.medium;
+      acc.low += s.summary.low;
+    }
+    return acc;
+  }, { total_findings: 0, critical: 0, high: 0, medium: 0, low: 0 });
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
 
   return (
     <div>
@@ -161,46 +284,72 @@ export default function ForgeAuditDashboard() {
           <div className="col-span-3 grid grid-cols-4 gap-3 mb-2">
             <div className="bg-[#18181b] border border-white/5 rounded-lg p-3 flex items-center justify-between">
               <span className="text-white/50 text-xs">Total</span>
-              <span className="text-white font-semibold">{mockIssues.length}</span>
+              <span className="text-white font-semibold">{totals.total_findings}</span>
             </div>
             <div className="bg-[#18181b] border border-white/5 rounded-lg p-3 flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs"><span className="w-2 h-2 rounded-full bg-red-500" />Critical</span>
-              <span className="text-white font-semibold">1</span>
+              <span className="text-white font-semibold">{totals.critical}</span>
             </div>
             <div className="bg-[#18181b] border border-white/5 rounded-lg p-3 flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs"><span className="w-2 h-2 rounded-full bg-orange-500" />High</span>
-              <span className="text-white font-semibold">2</span>
+              <span className="text-white font-semibold">{totals.high}</span>
             </div>
             <div className="bg-[#18181b] border border-white/5 rounded-lg p-3 flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-xs"><span className="w-2 h-2 rounded-full bg-yellow-500" />Med/Low</span>
-              <span className="text-white font-semibold">1</span>
+              <span className="text-white font-semibold">{totals.medium + totals.low}</span>
             </div>
           </div>
 
           {/* Issues List */}
           <div className="col-span-2 bg-[#18181b] border border-white/5 rounded-xl overflow-hidden">
             <div className="p-3 border-b border-white/5 flex items-center justify-between">
-              <span className="text-white/50 text-xs">Issues</span>
-              <button className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="text-white/50 text-xs">
+                {selectedScan ? `Issues from scan` : "All Issues"}
+              </span>
+              <button 
+                onClick={refreshScans}
+                disabled={isLoading}
+                className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1 disabled:opacity-50"
+              >
+                <svg className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Rescan
+                Refresh
               </button>
             </div>
-            <div className="divide-y divide-white/5">
-              {mockIssues.map((issue) => (
-                <div key={issue.id} className="p-3 hover:bg-white/[0.02] transition-colors flex items-center gap-3">
-                  <span className={`w-2 h-2 rounded-full ${severityColors[issue.severity]}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white text-sm">{issue.type}</div>
-                    <div className="text-white/40 text-xs">{issue.file}</div>
+            <div className="divide-y divide-white/5 max-h-80 overflow-y-auto">
+              {isLoading ? (
+                <div className="p-6 text-center text-white/40 text-sm">Loading...</div>
+              ) : selectedScan?.findings && selectedScan.findings.length > 0 ? (
+                selectedScan.findings.map((finding, idx) => (
+                  <div key={idx} className="p-3 hover:bg-white/[0.02] transition-colors flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full ${severityColors[finding.severity] || 'bg-gray-500'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white text-sm">{finding.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
+                      <div className="text-white/40 text-xs">Line {finding.line}</div>
+                    </div>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                      finding.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
+                      finding.severity === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                      finding.severity === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {finding.severity}
+                    </span>
                   </div>
-                  <button className="text-xs text-white/40 hover:text-white px-2 py-1 rounded hover:bg-white/5">
-                    View
-                  </button>
+                ))
+              ) : scans.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-white/40 text-sm mb-3">No scans yet</p>
+                  <Link href="/audit" className="text-xs text-orange-400 hover:text-orange-300">
+                    Run your first scan →
+                  </Link>
                 </div>
-              ))}
+              ) : (
+                <div className="p-6 text-center text-white/40 text-sm">
+                  Select a scan to view issues
+                </div>
+              )}
             </div>
           </div>
 
@@ -209,22 +358,43 @@ export default function ForgeAuditDashboard() {
             <div className="p-3 border-b border-white/5">
               <span className="text-white/50 text-xs">Recent Scans</span>
             </div>
-            <div className="divide-y divide-white/5">
-              {[
-                { repo: "api-server", time: "2h ago", status: "done" },
-                { repo: "web-client", time: "1d ago", status: "done" },
-                { repo: "ml-pipeline", time: "3d ago", status: "running" },
-              ].map((scan, i) => (
-                <div key={i} className="p-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-white text-xs">{scan.repo}</div>
-                    <div className="text-white/30 text-[10px]">{scan.time}</div>
-                  </div>
-                  <span className={`w-1.5 h-1.5 rounded-full ${scan.status === "done" ? "bg-green-500" : "bg-yellow-500 animate-pulse"}`} />
+            <div className="divide-y divide-white/5 max-h-80 overflow-y-auto">
+              {scans.length > 0 ? (
+                scans.map((scan) => (
+                  <button
+                    key={scan.scan_id}
+                    onClick={() => loadScanDetails(scan.scan_id)}
+                    className={`w-full p-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors text-left ${
+                      selectedScan?.scan_id === scan.scan_id ? 'bg-white/[0.04]' : ''
+                    }`}
+                  >
+                    <div>
+                      <div className="text-white text-xs">
+                        {scan.source_type === 'paste' ? 'Code Paste' : scan.repo_url || 'Scan'}
+                      </div>
+                      <div className="text-white/30 text-[10px]">{formatTimeAgo(scan.created_at)}</div>
+                    </div>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      scan.status === "completed" ? "bg-green-500" : 
+                      scan.status === "running" ? "bg-yellow-500 animate-pulse" :
+                      scan.status === "failed" ? "bg-red-500" : "bg-gray-500"
+                    }`} />
+                  </button>
+                ))
+              ) : (
+                <div className="p-4 text-center text-white/30 text-xs">
+                  No scans yet
                 </div>
-              ))}
+              )}
             </div>
           </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="col-span-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
         </div>
       )}
     </div>

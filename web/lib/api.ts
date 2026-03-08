@@ -21,18 +21,26 @@ async function api<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Unknown error" }));
-    throw new Error(error.detail || "Request failed");
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: `HTTP ${response.status}: ${response.statusText}` }));
+      throw new Error(error.detail || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (err: any) {
+    // Network errors (CORS, unreachable, etc.)
+    if (err.name === "TypeError" && err.message === "Failed to fetch") {
+      throw new Error("Unable to connect to API server. Please check your connection.");
+    }
+    throw err;
   }
-
-  return response.json();
 }
 
 // Auth
@@ -228,13 +236,57 @@ export async function quickAuditAnalyze(
   token: string,
   code: string,
   language?: string,
-  model: string = "forge-coder"
+  model: string = "forge-coder",
+  save: boolean = false
 ) {
-  return api<QuickAnalyzeResult>("/v1/audit/try", {
+  return api<QuickAnalyzeResult & { scan_id?: string }>("/v1/audit/try", {
     method: "POST",
-    body: { code, language, model },
+    body: { code, language, model, save },
     token,
   });
+}
+
+// Dashboard audit endpoints
+export async function getDashboardScans(token: string, limit: number = 20) {
+  return api<Array<{
+    scan_id: string;
+    status: string;
+    source_type: string;
+    repo_url?: string;
+    created_at: string;
+    summary?: {
+      total_findings: number;
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+    };
+  }>>(`/v1/audit/dashboard/scans?limit=${limit}`, { token });
+}
+
+export async function getDashboardScan(token: string, scanId: string) {
+  return api<{
+    scan_id: string;
+    status: string;
+    source_type: string;
+    repo_url?: string;
+    created_at: string;
+    completed_at?: string;
+    summary: {
+      total_findings: number;
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+      files_scanned: number;
+      lines_of_code: number;
+    };
+    findings: AuditFinding[];
+    usage: {
+      tokens_used: number;
+      cost: number;
+    };
+  }>(`/v1/audit/dashboard/scan/${scanId}`, { token });
 }
 
 export async function startAuditScan(

@@ -20,8 +20,9 @@ export default function AuditPage() {
   // Audit state
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const [scanResult, setScanResult] = useState<QuickAnalyzeResult | null>(null);
+  const [scanResult, setScanResult] = useState<(QuickAnalyzeResult & { scan_id?: string }) | null>(null);
   const [forgeToken, setForgeToken] = useState<string | null>(null);
+  const [saveToHistory, setSaveToHistory] = useState(true);
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -67,14 +68,55 @@ export default function AuditPage() {
     syncWithForge();
   }, [isSignedIn, user, forgeToken]);
 
-  const runAudit = async () => {
-    if (!code.trim()) return;
+  // Read file contents as text
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+      reader.readAsText(file);
+    });
+  };
+
+  // Get code to analyze based on input method
+  const getCodeToAnalyze = async (): Promise<string | null> => {
+    if (inputMethod === "paste") {
+      return code.trim() || null;
+    }
     
+    if (inputMethod === "upload" && files.length > 0) {
+      try {
+        // Read all files and concatenate with file headers
+        const fileContents = await Promise.all(
+          files.map(async (file) => {
+            const content = await readFileAsText(file);
+            return `// ===== ${file.name} =====\n${content}`;
+          })
+        );
+        return fileContents.join("\n\n");
+      } catch (err) {
+        setScanError("Failed to read uploaded files");
+        return null;
+      }
+    }
+    
+    return null;
+  };
+
+  const runAudit = async () => {
     setScanError(null);
     setIsScanning(true);
     setScanResult(null);
     
     try {
+      const codeToAnalyze = await getCodeToAnalyze();
+      
+      if (!codeToAnalyze) {
+        setScanError("No code to analyze. Please paste code or upload files.");
+        setIsScanning(false);
+        return;
+      }
+      
       if (!forgeToken) {
         // Try to get token if not already synced
         if (isSignedIn && user) {
@@ -83,7 +125,7 @@ export default function AuditPage() {
             const result = await clerkSync(user.id, email, user.fullName || undefined);
             setForgeToken(result.forge_token);
             
-            const auditResult = await quickAuditAnalyze(result.forge_token, code);
+            const auditResult = await quickAuditAnalyze(result.forge_token, codeToAnalyze, undefined, "forge-coder", saveToHistory);
             setScanResult(auditResult);
             setTimeout(scrollToResults, 100);
             return;
@@ -94,7 +136,7 @@ export default function AuditPage() {
         return;
       }
       
-      const result = await quickAuditAnalyze(forgeToken, code);
+      const result = await quickAuditAnalyze(forgeToken, codeToAnalyze, undefined, "forge-coder", saveToHistory);
       setScanResult(result);
       
       // Scroll to results after a brief delay
@@ -104,6 +146,17 @@ export default function AuditPage() {
     } finally {
       setIsScanning(false);
     }
+  };
+
+  // Check if we can run audit based on input method
+  const canRunAudit = () => {
+    if (!isSignedIn) return false;
+    if (isScanning) return false;
+    
+    if (inputMethod === "paste") return code.trim().length > 0;
+    if (inputMethod === "upload") return files.length > 0;
+    
+    return false;
   };
 
   // Animated counter hook
@@ -599,9 +652,23 @@ export default function AuditPage() {
                 <Link href="/sign-in" className="text-orange-400 hover:text-orange-300">Sign in</Link> to run security audits
               </p>
             )}
+            
+            {/* Save to Dashboard checkbox */}
+            {isSignedIn && (
+              <label className="flex items-center gap-2 text-sm text-[#a1a1aa] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveToHistory}
+                  onChange={(e) => setSaveToHistory(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#3f3f46] bg-[#18181b] text-orange-500 focus:ring-orange-500 focus:ring-offset-0"
+                />
+                Save results to dashboard
+              </label>
+            )}
+            
             <button
               onClick={runAudit}
-              disabled={(inputMethod === "paste" && !code.trim()) || isScanning || !isSignedIn}
+              disabled={!canRunAudit()}
               className="flex items-center gap-3 px-8 py-4 bg-white text-black font-semibold rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isScanning ? (
@@ -710,12 +777,25 @@ export default function AuditPage() {
               </div>
             )}
 
-            {/* Usage Info */}
-            {scanResult.usage && (
-              <div className="mt-8 text-center text-[#52525b] text-sm">
-                Tokens used: {scanResult.usage.tokens_used.toLocaleString()} · Cost: ${scanResult.usage.cost.toFixed(4)}
-              </div>
-            )}
+            {/* Usage Info & Dashboard Link */}
+            <div className="mt-8 flex flex-col items-center gap-4">
+              {scanResult.usage && (
+                <div className="text-[#52525b] text-sm">
+                  Tokens used: {scanResult.usage.tokens_used.toLocaleString()} · Cost: ${scanResult.usage.cost.toFixed(4)}
+                </div>
+              )}
+              {scanResult.scan_id && (
+                <Link
+                  href="/dashboard/audit"
+                  className="flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                  </svg>
+                  View in Dashboard →
+                </Link>
+              )}
+            </div>
           </div>
         </section>
       )}

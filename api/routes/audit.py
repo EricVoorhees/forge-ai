@@ -559,15 +559,23 @@ async def quick_analyze(
     }
 
 
+class TryAuditRequest(BaseModel):
+    code: str = Field(..., description="Code to analyze")
+    language: Optional[str] = None
+    model: str = "forge-coder"
+    save: bool = Field(False, description="Save results to dashboard")
+
+
 @router.post("/try")
 async def try_audit(
-    request: QuickAnalyzeRequest,
+    request: TryAuditRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Try It Now - Quick analysis for signed-in users (no paid subscription required).
     Limited to static analysis only (no LLM enrichment) for free users.
+    Optionally saves results to user's dashboard.
     """
     language = request.language or analyzer.detect_language(request.code)
     
@@ -575,7 +583,7 @@ async def try_audit(
         code=request.code,
         language=language,
         file_path="input.txt",
-        context_description=request.context
+        context_description=None
     )
     
     # Run static analysis
@@ -609,11 +617,56 @@ async def try_audit(
             cost = calculate_cost(request.model, plan, total_tokens, total_tokens // 2)
             subscription.credit_balance = max(Decimal("0"), subscription.credit_balance - cost)
             await log_usage(db, str(user.id), total_tokens, total_tokens // 2, cost=float(cost))
-            await db.commit()
     
     severity_counts = analyzer.get_severity_counts(findings)
+    scan_id = None
+    
+    # Optionally save to dashboard
+    if request.save:
+        scan = AuditScan(
+            user_id=user.id,
+            source_type="paste",
+            status="completed",
+            completed_at=datetime.utcnow(),
+            total_findings=len(findings),
+            critical_count=severity_counts.get("critical", 0),
+            high_count=severity_counts.get("high", 0),
+            medium_count=severity_counts.get("medium", 0),
+            low_count=severity_counts.get("low", 0),
+            files_scanned=1,
+            lines_of_code=analyzer.count_lines(request.code),
+            languages=json.dumps([language]) if language else None,
+            tokens_used=total_tokens,
+            model=request.model
+        )
+        db.add(scan)
+        await db.flush()
+        
+        # Save findings
+        for f in findings:
+            db_finding = AuditFinding(
+                scan_id=scan.id,
+                finding_type=f.finding_type,
+                severity=f.severity,
+                confidence=f.confidence,
+                file_path=f.file_path,
+                line_number=f.line_number,
+                column_number=f.column_number,
+                code_snippet=f.code_snippet,
+                description=f.description,
+                exploit_reasoning=f.exploit_reasoning,
+                suggested_fix=json.dumps(f.suggested_fix) if f.suggested_fix else None,
+                cwe_id=f.cwe_id,
+                owasp_category=f.owasp_category
+            )
+            db.add(db_finding)
+        
+        scan_id = str(scan.id)
+    
+    await db.commit()
     
     return {
+        "scan_id": scan_id,
         "language": language,
         "lines_of_code": analyzer.count_lines(request.code),
         "plan": plan,
@@ -640,6 +693,127 @@ async def try_audit(
         "usage": {
             "tokens_used": total_tokens,
             "cost": 0 if plan == "free" else float(calculate_cost(request.model, plan, total_tokens, total_tokens // 2))
+        }
+    }
+
+
+# =============================================================================
+# Dashboard Endpoints (JWT Auth)
+# =============================================================================
+
+@router.get("/dashboard/scans")
+async def dashboard_list_scans(
+    limit: int = 20,
+    offset: int = 0,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List user's audit scans for dashboard (JWT auth)."""
+    result = await db.execute(
+        select(AuditScan)
+        .where(AuditScan.user_id == user.id)
+        .order_by(desc(AuditScan.created_at))
+        .limit(limit)
+        .offset(offset)
+    )
+    scans = result.scalars().all()
+    
+    return [
+        {
+            "scan_id": str(s.id),
+            "status": s.status,
+            "source_type": s.source_type,
+            "repo_url": s.repo_url,
+            "created_at": s.created_at.isoformat() if s.created_at else "",
+            "summary": {
+                "total_findings": s.total_findings or 0,
+                "critical": s.critical_count or 0,
+                "high": s.high_count or 0,
+                "medium": s.medium_count or 0,
+                "low": s.low_count or 0,
+            } if s.status == "completed" else None
+        }
+        for s in scans
+    ]
+
+
+@router.get("/dashboard/scan/{scan_id}")
+async def dashboard_get_scan(
+    scan_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get scan details for dashboard (JWT auth)."""
+    try:
+        scan_uuid = uuid.UUID(scan_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid scan ID format"
+        )
+    
+    result = await db.execute(
+        select(AuditScan)
+        .where(AuditScan.id == scan_uuid)
+        .where(AuditScan.user_id == user.id)
+    )
+    scan = result.scalar_one_or_none()
+    
+    if not scan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scan not found"
+        )
+    
+    # Get findings
+    findings_result = await db.execute(
+        select(AuditFinding)
+        .where(AuditFinding.scan_id == scan.id)
+        .order_by(
+            # Order by severity
+            AuditFinding.severity.desc()
+        )
+    )
+    findings = findings_result.scalars().all()
+    
+    return {
+        "scan_id": str(scan.id),
+        "status": scan.status,
+        "source_type": scan.source_type,
+        "repo_url": scan.repo_url,
+        "created_at": scan.created_at.isoformat() if scan.created_at else "",
+        "completed_at": scan.completed_at.isoformat() if scan.completed_at else None,
+        "summary": {
+            "total_findings": scan.total_findings or 0,
+            "critical": scan.critical_count or 0,
+            "high": scan.high_count or 0,
+            "medium": scan.medium_count or 0,
+            "low": scan.low_count or 0,
+            "files_scanned": scan.files_scanned or 0,
+            "lines_of_code": scan.lines_of_code or 0,
+        },
+        "findings": [
+            {
+                "id": str(f.id),
+                "type": f.finding_type,
+                "severity": f.severity,
+                "confidence": f.confidence,
+                "file_path": f.file_path,
+                "line": f.line_number,
+                "column": f.column_number,
+                "code_snippet": f.code_snippet,
+                "description": f.description,
+                "exploit_reasoning": f.exploit_reasoning,
+                "suggested_fix": json.loads(f.suggested_fix) if f.suggested_fix else None,
+                "cwe_id": f.cwe_id,
+                "owasp_category": f.owasp_category,
+                "status": f.finding_status
+            }
+            for f in findings
+        ],
+        "usage": {
+            "tokens_used": scan.tokens_used or 0,
+            "cost": float(scan.cost or 0)
         }
     }
 
